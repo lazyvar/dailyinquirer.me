@@ -27,6 +27,7 @@ SECRET_KEY = '2+=yn=c0$hukv6lqtpr!q^!93_h#!o!3_y&7e=isv9l64aj3k&'
 
 INSTALLED_APPS = [
     'authentication.apps.AuthenticationConfig',
+    'core.apps.CoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,7 +51,9 @@ ROOT_URLCONF = 'dailyinquirer.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+           './templates/',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -86,6 +89,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'authentication.User'
 
+LOGIN_REDIRECT_URL = 'index'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
