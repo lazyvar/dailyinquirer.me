@@ -6,7 +6,7 @@
 </div>
 <div class="row">
     <div class="mx-auto col-sm-8 col-md-4">
-        {% endif %} {% if user.is_authenticated %}
+     {% if user.is_authenticated %}
         <a class="mx-auto" href="/logout">Logout</a> {% else %}
         <h3>Sign Up</h3> {% if form.errors %} {% for field in form %} {% for error in field.errors %}
         <div class="alert alert-danger">
