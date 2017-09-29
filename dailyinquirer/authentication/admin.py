@@ -11,11 +11,12 @@ class UserCreationForm(forms.ModelForm):
     """A form for creating new users. Includes all the required
     fields, plus a repeated password."""
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+    password2 = forms.CharField(
+        label='Password confirmation', widget=forms.PasswordInput)
 
     class Meta:
         model = User
-        fields = ('email', 'mail_time', 'is_public')
+        fields = ('email',)
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -43,7 +44,8 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'mail_time', 'is_public', 'is_active', 'is_admin')
+        fields = ('email', 'password', 'mail_time',
+                  'is_public', 'is_active', 'is_admin')
 
     def clean_password(self):
         # Regardless of what the user provides, return the initial value.
@@ -73,11 +75,12 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('email', 'password1', 'password2')}
-        ),
+         ),
     )
     search_fields = ('email',)
     ordering = ('email',)
     filter_horizontal = ()
+
 
 # Now register the new UserAdmin...
 admin.site.register(User, UserAdmin)

@@ -6,21 +6,47 @@
 </div>
 <div class="row">
     <div class="mx-auto col-sm-8 col-md-4">
-        {% if user.is_authenticated %}
-        <a href="/logout">Logout</a> {% else %}
-        <h3>Sign Up</h3>
-        <form>
+        {% endif %} {% if user.is_authenticated %}
+        <a class="mx-auto" href="/logout">Logout</a> {% else %}
+        <h3>Sign Up</h3> {% if form.errors %} {% for field in form %} {% for error in field.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %} {% endif %}
+        <form method="post" action="">
+            {% csrf_token %}
             <div class="form-group">
-                <input type="email" class="form-control" id="email" placeholder="Email">
+                <input type="email" class="form-control" id="id_email" placeholder="Email" name="email" required="">
             </div>
             <div class="form-group">
-                <input type="password" class="form-control" id="password1" placeholder="Password">
+                <input type="password" class="form-control" id="id_password1" placeholder="Password" name="password1" required="">
             </div>
             <div class="form-group">
-                <input type="password" class="form-control" id="password2" placeholder="Confirm Password">
+                <input type="password" class="form-control" id="id_password2" placeholder="Confirm Password" name="password2" required="">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
-            <a href="/login/" class="btn btn-light btn-block">Login</a>
+        </form>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="mx-auto col-sm-8 col-md-4">
+        <h2>Log in</h2>
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="username" class="form-control" id="email" placeholder="Email" id="id_username" required="">
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-control" name="password" required="" id="id_password" placeholder="Password">
+            </div>
+            <button type="submit" value="login" class="btn btn-primary btn-block">Login</button>
+            <a href="{% url 'password_reset' %}" class="btn btn-light btn-block">Forgot password?</a>
+            <input type="hidden" name="next" value="{{ next }}" />
         </form>
         {% endif %}
     </div>
