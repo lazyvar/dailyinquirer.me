@@ -11,12 +11,13 @@
         {% else %}
         <p>{{ user.email }}</p><a class="mx-auto" href="/logout">Logout</a>
         <div style="margin: 12px; border-top: 1px black;">{% endif %} {% for entry in entries %}
-            <br> {% autoescape off %}
+            <br>
+            <h4><i> {{ entry.prompt }} </i></h4> {% autoescape off %}
             <p> {{ entry.content }} </p>
             {% endautoescape %}
             <strong> {{ entry.pub_date }}
-            </strong>
-            <br> {% endfor %}
+            </strong> 
+            <br>{% endfor %}
         </div>
     </div>
 </div>
