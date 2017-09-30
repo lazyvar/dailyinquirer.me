@@ -21,7 +21,7 @@ def index(request):
             if form.is_valid():
                 user = form.save()
                 send_activation_email(request, user)
-                return HttpResponse('Please confirm your email address to complete the registration')
+                return render(request, 'registration/activation_email_sent.html')
             else:
                 return render(request, 'core/index.html', {'form': form})
         else:
