@@ -13,26 +13,33 @@ from django.contrib import messages
 
 
 def index(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            current_site = get_current_site(request)
-            message = render_to_string('registration/confirm_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-            mail_subject = 'Activate your Daily Inquirer Account'
-            to_email = form.cleaned_data.get('email')
-            email = EmailMessage(mail_subject, message, to=[to_email])
-            email.send()
-            return HttpResponse('Please confirm your email address to complete the registration')
-        else:
-            return render(request, 'core/index.html', {'form': form})
+    if request.user.is_authenticated():
+        return render(request, 'core/index_logged_in.html')
     else:
-        return render(request, 'core/index.html')
+        if request.method == 'POST':
+            form = UserCreationForm(request.POST)
+            if form.is_valid():
+                user = form.save()
+                send_activation_email(request, user)
+                return HttpResponse('Please confirm your email address to complete the registration')
+            else:
+                return render(request, 'core/index.html', {'form': form})
+        else:
+            return render(request, 'core/index.html')
+
+
+def send_activation_email(request, user):
+    current_site = get_current_site(request)
+    message = render_to_string('registration/confirm_email.html', {
+        'user': user,
+        'domain': current_site.domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+    })
+    mail_subject = 'Activate your Daily Inquirer Account'
+    to_email = user.email
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    email.send()
 
 
 def activate(request, uidb64, token):
@@ -42,7 +49,7 @@ def activate(request, uidb64, token):
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
+        user.confirmed_email = True
         user.save()
         login(request, user)
         message = "Email confrimation success"

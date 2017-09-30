@@ -39,9 +39,10 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
+    confirmed_email = models.BooleanField(default=False)
     mail_time = models.IntegerField(default=360)
     is_public = models.BooleanField(default=True)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
     objects = UserManager()

@@ -1,0 +1,15 @@
+{% extends "core/base.html" %} {% block content %}
+<div class="row">
+    <div class="mx-auto col-xs-10">
+        <h1 style="font-family: 'Noticia Text', serif; font-size: 3em">The Daily Inquirer</h1>
+    </div>
+</div>
+<div class="row">
+    <div class="mx-auto col-sm-8 col-md-4">
+        {% if not user.confirmed_email %}
+        <p>You have not yet confirmed your email address. Please do that before blah blah blah!</p>
+        {% else %}
+        <a class="mx-auto" href="/logout">Logout</a> {% endif %}
+    </div>
+</div>
+{% endblock %}

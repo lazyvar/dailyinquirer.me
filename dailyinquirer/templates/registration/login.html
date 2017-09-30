@@ -3,11 +3,15 @@
     <div class="mx-auto col-6">
         {% if user.is_authenticated %}
         <p> You are already logged in silly </p>
-        {% else %} {% if form.errors %}
-        <div class="alert alert-danger" role="alert">
-            Your username and password didn't match. Please try again.
+        {% else %} {% if form.errors %} {% for field in form %} {% for error in field.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
         </div>
-        {% endif %}
+        {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %} {% endif %}
         <h2>Log in</h2>
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
