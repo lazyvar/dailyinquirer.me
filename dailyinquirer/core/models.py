@@ -5,7 +5,8 @@ from authentication.models import User
 class Prompt(models.Model):
     question = models.CharField(max_length=255)
     mail_day = models.DateTimeField()
-    override_html = models.TextField(null=True)
+    override_html = models.TextField(default=None, null=True)
+    category = models.CharField(max_length=255, default=None, null=True)
 
     def __str__(self):
         return self.question
