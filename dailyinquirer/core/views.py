@@ -11,10 +11,13 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import login
 from django.contrib import messages
 
+from core.models import Entry
+
 
 def index(request):
     if request.user.is_authenticated():
-        return render(request, 'core/index_logged_in.html')
+        entries = Entry.objects.filter(author=request.user)
+        return render(request, 'core/index_logged_in.html', {'entries': entries})
     else:
         if request.method == 'POST':
             form = UserCreationForm(request.POST)

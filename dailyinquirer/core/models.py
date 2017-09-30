@@ -1,3 +1,8 @@
 from django.db import models
+from authentication.models import User
 
-# Create your models here.
+
+class Entry(models.Model):
+    content = models.TextField()
+    pub_date = models.DateTimeField('date published')
+    author = models.ForeignKey(User, on_delete=models.PROTECT)
