@@ -10,9 +10,11 @@ from authentication.tokens import account_activation_token
 from django.core.mail import EmailMessage
 from django.contrib.auth import login
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import json
 
-from core.models import Entry
-
+from core.models import Entry, Prompt
 
 def index(request):
     if request.user.is_authenticated():
@@ -60,3 +62,46 @@ def activate(request, uidb64, token):
         return redirect('index')
     else:
         return HttpResponse('Activation link is invalid!')
+
+
+@csrf_exempt
+def on_incoming_message(request):
+     if request.method == 'POST':
+        data = json.loads(request.body)
+        sender        = data['sender']
+        stripped_text = data['stripped-text']
+
+        if stripped_text != None:
+
+            todays_date = timezone.now()
+            todays_day = todays_date.day
+            todays_month = todays_date.month
+            todays_year = todays_date.year
+
+            try:
+                todays_prompt = Prompt.objects.get(mail_day__day=todays_day, 
+                mail_day__month=todays_month, mail_day__year=todays_year)
+            except Prompt.DoesNotExist:
+                todays_prompt = None
+
+            try:
+                entry_exists = Entry.objects.get(pub_date__day=todays_day, 
+                pub_date__month=todays_month, pub_date__year=todays_year)
+            except Entry.DoesNotExist:
+                entry_exists = None
+
+            try:
+                user = User.objects.get(email=sender)
+            except User.DoesNotExist:
+                user = None
+
+            print(todays_prompt)
+            print(entry_exists)
+            print(user)
+
+            if user != None and todays_prompt != None and entry_exists == None:
+                entry = Entry(content=stripped_text, author=user,
+                prompt=todays_prompt, pub_date=todays_date)
+                entry.save()
+
+     return HttpResponse('OK')
