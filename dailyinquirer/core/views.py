@@ -17,6 +17,7 @@ import json
 from core.models import Entry, Prompt
 
 def index(request):
+
     if request.user.is_authenticated():
         entries = Entry.objects.filter(author=request.user)
         return render(request, 'core/index_logged_in.html', {'entries': entries})
@@ -43,7 +44,7 @@ def send_activation_email(request, user):
     })
     mail_subject = 'Activate your Daily Inquirer Account'
     to_email = user.email
-    email = EmailMessage(mail_subject, message, to=[to_email])
+    email = EmailMessage(mail_subject, message, "Beep Boop <beep-boop@dailyinquirer.me>", [to_email])
     email.send()
 
 
