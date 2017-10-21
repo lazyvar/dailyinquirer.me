@@ -67,9 +67,18 @@ def activate(request, uidb64, token):
 @csrf_exempt
 def on_incoming_message(request):
      if request.method == 'POST':
-        data = json.loads(request.body)
-        sender        = data['sender']
-        stripped_text = data['stripped-text']
+
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            data = request.POST
+
+        try :
+            sender = data['sender']
+            stripped_text = data['stripped-text']
+        except ValueError:
+            sender = None
+            stripped_text = None
 
         if stripped_text != None:
 
@@ -94,10 +103,6 @@ def on_incoming_message(request):
                 user = User.objects.get(email=sender)
             except User.DoesNotExist:
                 user = None
-
-            print(todays_prompt)
-            print(entry_exists)
-            print(user)
 
             if user != None and todays_prompt != None and entry_exists == None:
                 entry = Entry(content=stripped_text, author=user,
