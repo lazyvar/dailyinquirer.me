@@ -1,7 +1,7 @@
 from .base import *
 import dj_database_url
 
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['dailyinquirer.me', 'www.dailyinquirer.me']
 
@@ -21,3 +21,4 @@ STATICFILES_DIRS = (
 )
 
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+
