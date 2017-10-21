@@ -70,13 +70,13 @@ def on_incoming_message(request):
 
         try:
             data = json.loads(request.body)
-        except ValueError:
+        except:
             data = request.POST
 
         try :
             sender = data['sender']
             stripped_text = data['stripped-text']
-        except ValueError:
+        except:
             sender = None
             stripped_text = None
 
