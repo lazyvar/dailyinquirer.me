@@ -22,9 +22,7 @@
     src: url("/static/font/AvenirNextLTPro-BoldCn.otf") format("otf");
 }
 
-
 /* xs */
-
 @media (min-width: 0px) {
     h1 {
         font-size: 2.2em;
@@ -35,10 +33,7 @@
     }
 }
 
-
-
 /* sm */
-
 @media (min-width: 576px) {
     h1 {
         font-size: 3.4em;
@@ -49,10 +44,7 @@
     }
 }
 
-
-
 /* md */
-
 @media (min-width: 768px) {
     h1 {
         font-size: 4em;
@@ -63,10 +55,7 @@
     }
 }
 
-
-
 /* lg */
-
 @media (min-width: 992px) {
     h1 {
         font-size: 5em;
@@ -77,10 +66,7 @@
     }
 }
 
-
-
 /* xl */
-
 @media (min-width: 1200px) {
     h1 {
         font-size: 7em;
