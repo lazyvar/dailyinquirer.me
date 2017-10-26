@@ -55,8 +55,14 @@
     }
 }
 
-/* lg */
 @media (min-width: 992px) {
+	.container {
+		max-width: 720px;
+	}
+}
+
+/* lg */
+/*@media (min-width: 992px) {
     h1 {
         font-size: 4em;
     }
@@ -64,10 +70,10 @@
     h3 {
         font-size: 1.7em;
     }
-}
+}*/
 
 /* xl */
-@media (min-width: 1200px) {
+/*@media (min-width: 1200px) {
     h1 {
         font-size: 5em;
     }
@@ -76,7 +82,7 @@
         font-size: 2em;
     }
 }
-
+*/
 .bold {
     font-weight: 900;
 }

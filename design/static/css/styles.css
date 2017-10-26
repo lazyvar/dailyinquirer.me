@@ -25,18 +25,18 @@ body {
 }
 
 /* lg */
-@media (min-width: 992px) {
+/*@media (min-width: 992px) {
     .step {
         padding: 2%;
     }
-}
+}*/
 
 /* xl */
-@media (min-width: 1200px) {
+/*@media (min-width: 1200px) {
     .step {
         padding: 2%;
     }
-}
+}*/
 
 p {
 	font-size: 0.85em;
@@ -56,6 +56,11 @@ p {
 
 .dotted:hover {
 	text-decoration: none;
+}
+
+.vcenter {
+    display: flex;
+    align-items: center;
 }
 
 .steps img {
