@@ -38,16 +38,35 @@ body {
     }
 }
 
-.step img {
-	width: 50%;
-	height: auto;
+p {
+	font-size: 0.85em;
 }
 
+.typewriter {
+	font-family: 'American Typewriter', sans-serif;
+}
 
+.dotted {
+	border-bottom: 1px dotted #007bff;
+}
 
-.circle {
-	border-radius: 50%;
-    background: #F5F5F5;
-    width: 100%;
-    padding-bottom: 100%;
+.bottom-border {
+	border-bottom: 1px solid #ebebeb;
+}
+
+.dotted:hover {
+	text-decoration: none;
+}
+
+.steps img {
+	height: 72px;
+}
+
+.steps p {
+	margin-top: 16px;
+}
+
+.row {
+	margin-bottom: 12px;
+	margin-top: 12px;
 }
