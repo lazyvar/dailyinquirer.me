@@ -42,12 +42,17 @@ p {
 	font-size: 0.85em;
 }
 
+.footer-link {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
 .typewriter {
 	font-family: 'American Typewriter', sans-serif;
 }
 
 .dotted {
-	border-bottom: 1px dotted #007bff;
+	border-bottom: 1px solid #007bff;
 }
 
 .bottom-border {
