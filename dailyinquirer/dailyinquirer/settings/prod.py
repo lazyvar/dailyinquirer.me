@@ -13,16 +13,6 @@ db_from_env = dj_database_url.config()
 
 DATABASES['default'].update(db_from_env)
 
-# static files
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
-
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
-
-STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
-
 # mailgun email
 
 MAILGUN_ACCESS_KEY = os.environ.get('MAILGUN_ACCESS_KEY', None)

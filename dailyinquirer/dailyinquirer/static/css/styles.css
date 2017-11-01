@@ -1,0 +1,82 @@
+body {
+    font-family: 'Avenir Next', sans-serif;
+}
+
+
+/* xs */
+@media (min-width: 0px) {
+    .step {
+        padding: 20%;
+    }
+}
+
+/* sm */
+@media (min-width: 576px) {
+    .step {
+        padding: 4%;
+    }
+}
+
+/* md */
+@media (min-width: 768px) {
+    .step {
+        padding: 2%;
+    }
+}
+
+/* lg */
+/*@media (min-width: 992px) {
+    .step {
+        padding: 2%;
+    }
+}*/
+
+/* xl */
+/*@media (min-width: 1200px) {
+    .step {
+        padding: 2%;
+    }
+}*/
+
+p {
+	font-size: 0.85em;
+}
+
+.footer-link {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.typewriter {
+	font-family: 'American Typewriter', sans-serif;
+}
+
+.dotted {
+	border-bottom: 1px solid #007bff;
+}
+
+.bottom-border {
+	border-bottom: 1px solid #ebebeb;
+}
+
+.dotted:hover {
+	text-decoration: none;
+}
+
+.vcenter {
+    display: flex;
+    align-items: center;
+}
+
+.steps img {
+	height: 72px;
+}
+
+.steps p {
+	margin-top: 16px;
+}
+
+.row {
+	margin-bottom: 12px;
+	margin-top: 12px;
+}
