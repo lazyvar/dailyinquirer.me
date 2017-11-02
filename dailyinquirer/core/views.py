@@ -102,19 +102,20 @@ def on_incoming_message(request):
                 todays_prompt = None
 
             try:
-                entry_exists = Entry.objects.get(pub_date__day=todays_day, 
-                pub_date__month=todays_month, pub_date__year=todays_year)
-            except Entry.DoesNotExist:
-                entry_exists = None
-
-            try:
                 user = User.objects.get(email=sender)
             except User.DoesNotExist:
                 user = None
 
-            if user != None and todays_prompt != None and entry_exists == None:
-                entry = Entry(content=stripped_text, author=user,
-                prompt=todays_prompt, pub_date=todays_date)
-                entry.save()
+            if user != None and todays_prompt != None:
+                try:
+                    entry_exists = Entry.objects.get(pub_date__day=todays_day, 
+                    pub_date__month=todays_month, pub_date__year=todays_year, author=user)
+                except Entry.DoesNotExist:
+                    entry_exists = None
+
+                if entry_exists == None:
+                    entry = Entry(content=stripped_text, author=user,
+                    prompt=todays_prompt, pub_date=todays_date)
+                    entry.save()
 
      return HttpResponse('OK')
