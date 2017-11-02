@@ -22,6 +22,13 @@ def index(request):
         entries = Entry.objects.filter(author=request.user)
         return render(request, 'core/index_logged_in.html', {'entries': entries})
     else:
+        return render(request, 'core/index.html')
+
+
+def register(request):
+    if request.user.is_authenticated():
+        return redirect('index')
+    else:
         if request.method == 'POST':
             form = UserCreationForm(request.POST)
             if form.is_valid():
@@ -29,9 +36,9 @@ def index(request):
                 send_activation_email(request, user)
                 return render(request, 'registration/activation_email_sent.html')
             else:
-                return render(request, 'core/index.html', {'form': form})
+                return render(request, 'registration/index.html', {'form': form})
         else:
-            return render(request, 'core/index.html')
+            return render(request, 'registration/register.html')
 
 
 def send_activation_email(request, user):
