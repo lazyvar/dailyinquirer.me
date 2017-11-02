@@ -1,4 +1,32 @@
 {% extends "core/base.html" %} {% block content %}
-
-
+    <div class="container">
+        <div class="row justify-content-center mb-0">
+            <h2 class="typewriter bold">The Daily Inquirer</h2>
+        </div>
+        <div class="row bottom-border justify-content-center mt-0" style="padding-bottom: 6px;">
+            <a href="/logout">{{ user.email }}</a>
+        </div>
+        {% for entry in entries %}
+        <div class="row justify-content-start">
+            <div class="col-sm-2">
+                <h3 style="display: inline;">{{ entry.pub_date|date:"M d" }}</h3>
+                <p style="display: inline;"><em>{{ entry.prompt.category }}</em></p>
+            </div>
+            <div class="col-sm-10">
+                <h3 class="typewriter bold">{{ entry.prompt.question }}</h3>
+                <p class="typewriter"> {{ entry.content }} </p>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="row bottom-border">
+        </div>
+        <div class="row justify-content-between">
+            <div class="col">
+                <p>&copy; Mack Hasz 2017 </p>
+            </div>
+            <div class="col text-right">
+                <p><a href="#" class="footer-link">About</a><a href="#" class="footer-link">Terms</a><a href="#" class="footer-link">Privacy</a></p>
+            </div>
+        </div>
+    </div>
 {% endblock %}
