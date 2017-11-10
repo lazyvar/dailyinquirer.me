@@ -15,6 +15,7 @@ from django.utils import timezone
 
 import json
 import pytz
+from datetime import datetime
 
 from core.models import Entry, Prompt
 from core.forms import ResendConfirmationForm
@@ -59,7 +60,7 @@ def resend_confirmation(request):
             except User.DoesNotExist:
                 user = None
 
-            if user != None:
+            if user is not None:
                 send_activation_email(request, user)
 
             return render(request, 'registration/activation_email_sent.html', {'email': email})
@@ -101,26 +102,34 @@ def activate(request, uidb64, token):
 
 @csrf_exempt
 def on_incoming_message(request):
-     if request.method == 'POST':
+    if request.method == 'POST':
 
         try:
             data = json.loads(request.body)
         except:
             data = request.POST
 
-        try :
+        try:
             sender = data['sender']
             stripped_text = data['stripped-text']
         except:
             sender = None
             stripped_text = None
 
-        if stripped_text != None:
+        if stripped_text is not None:
 
-            todays_date = timezone.now()
-            todays_day = todays_date.day
-            todays_month = todays_date.month
-            todays_year = todays_date.year
+            try:
+                user = User.objects.get(email=sender)
+            except User.DoesNotExist:
+                user = None
+
+            if user is not None:
+                user_tz = pytz.timezone(user.timezone)
+                local_time = datetime.now(user_tz)
+
+                todays_day = local_time.day
+                todays_month = local_time.month
+                todays_year = local_time.year
 
             try:
                 todays_prompt = Prompt.objects.get(mail_day__day=todays_day, 
@@ -129,20 +138,14 @@ def on_incoming_message(request):
                 todays_prompt = None
 
             try:
-                user = User.objects.get(email=sender)
-            except User.DoesNotExist:
-                user = None
-
-            if user != None and todays_prompt != None:
-                try:
-                    entry_exists = Entry.objects.get(pub_date__day=todays_day, 
+                entry_exists = Entry.objects.get(pub_date__day=todays_day, 
                     pub_date__month=todays_month, pub_date__year=todays_year, author=user)
-                except Entry.DoesNotExist:
-                    entry_exists = None
+            except Entry.DoesNotExist:
+                entry_exists = None
 
-                if entry_exists == None:
-                    entry = Entry(content=stripped_text, author=user,
-                    prompt=todays_prompt, pub_date=todays_date)
-                    entry.save()
+            if entry_exists is None:
+                entry = Entry(content=stripped_text, author=user,
+                    prompt=todays_prompt, pub_date=timezone.now())
+                entry.save()
 
-     return HttpResponse('OK')
+    return HttpResponse('OK')

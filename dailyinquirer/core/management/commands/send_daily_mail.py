@@ -11,32 +11,24 @@ from datetime import datetime
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        todays_date = pytz.utc.localize(datetime.utcnow())
-        todays_hour = todays_date.hour
-        todays_day = todays_date.day
-        todays_month = todays_date.month
-        todays_year = todays_date.year
+        users = User.objects.all()
+        for user in users:
+            user_tz = pytz.timezone(user.timezone)
+            local_time = datetime.now(user_tz)
 
-        try:
-            todays_prompt = Prompt.objects.get(mail_day__day=todays_day, 
-                mail_day__month=todays_month, mail_day__year=todays_year)
-        except Prompt.DoesNotExist:
-            todays_prompt = None
+            # 5am local time every day
+            if local_time.hour == 5:
+                todays_day = local_time.day
+                todays_month = local_time.month
+                todays_year = local_time.year
 
-        if todays_prompt == None:
-                mail_subject = "URGENT: NO PROMPT SET FOR TODAY"
-                to_email = "big.mack.with.pies@gmail.com"
-                email = EmailMessage(mail_subject, "YOU'RE A DUFFUS", 
-                    "The Daily Inquirer <the@dailyinquirer.me>", [to_email])
-                email.send()
-        else:
-            users = User.objects.all()
-            for user in users:
-                user_tz = pytz.timezone(user.timezone)
-                local_time = datetime.now(user_tz)
+                try:
+                    todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
+                        mail_day__month=todays_month, mail_day__year=todays_year)
+                except Prompt.DoesNotExist:
+                    todays_prompt = None
 
-                # 5am local time every day
-                if local_time.hour == 5:
+                if todays_prompt is not None:
                     plain_text = todays_prompt.question
                     html_content = render_to_string('core/daily_email.html', {
                         'prompt': todays_prompt,
