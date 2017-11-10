@@ -12,7 +12,9 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+
 import json
+import pytz
 
 from core.models import Entry, Prompt
 from core.forms import ResendConfirmationForm
@@ -40,9 +42,9 @@ def register(request):
                 send_activation_email(request, user)
                 return render(request, 'registration/activation_email_sent.html', {'email': user.email})
             else:
-                return render(request, 'registration/register.html', {'form': form})
+                return render(request, 'registration/register.html', {'form': form, 'timezones': pytz.common_timezones})
         else:
-            return render(request, 'registration/register.html')
+            return render(request, 'registration/register.html', {'timezones': pytz.common_timezones})
 
 def unconfirmed_email(request):
     return render(request, 'registration/user_unconfirmed.html')

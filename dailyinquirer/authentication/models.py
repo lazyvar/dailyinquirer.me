@@ -39,6 +39,7 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
+    timezone = models.CharField(max_length=64)
     confirmed_email = models.BooleanField(default=False)
     mail_time = models.IntegerField(default=360)
     is_public = models.BooleanField(default=True)
@@ -48,7 +49,7 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['timezone']
 
     def get_full_name(self):
         # The user is identified by their email address
