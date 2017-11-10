@@ -8,19 +8,23 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from authentication.tokens import account_activation_token
 from django.core.mail import EmailMessage
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import json
 
 from core.models import Entry, Prompt
+from core.forms import ResendConfirmationForm
 
 def index(request):
-
     if request.user.is_authenticated():
-        entries = Entry.objects.filter(author=request.user)
-        return render(request, 'core/index_logged_in.html', {'entries': entries})
+        if request.user.confirmed_email:
+            entries = Entry.objects.filter(author=request.user)
+            return render(request, 'core/index_logged_in.html', {'entries': entries})
+        else:
+            logout(request)
+            return redirect('unconfirmed_email')
     else:
         return render(request, 'core/index.html')
 
@@ -34,12 +38,33 @@ def register(request):
             if form.is_valid():
                 user = form.save()
                 send_activation_email(request, user)
-                return render(request, 'registration/activation_email_sent.html')
+                return render(request, 'registration/activation_email_sent.html', {'email': user.email})
             else:
-                return render(request, 'registration/index.html', {'form': form})
+                return render(request, 'registration/register.html', {'form': form})
         else:
             return render(request, 'registration/register.html')
 
+def unconfirmed_email(request):
+    return render(request, 'registration/user_unconfirmed.html')
+
+def resend_confirmation(request):
+    if request.method == 'POST':
+        form = ResendConfirmationForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                user = None
+
+            if user != None:
+                send_activation_email(request, user)
+
+            return render(request, 'registration/activation_email_sent.html', {'email': email})
+        else:
+            return render(request, 'registration/resend_confirmation.html', {'form': form})
+    else:
+        return render(request, 'registration/resend_confirmation.html')
 
 def send_activation_email(request, user):
     current_site = get_current_site(request)

@@ -42,6 +42,11 @@ p {
 	font-size: 0.85em;
 }
 
+.chip, .chip:hover {
+    color: inherit;
+    text-decoration: inherit;
+}
+
 .footer-link {
     margin-left: 4px;
     margin-right: 4px;
@@ -49,6 +54,10 @@ p {
 
 .typewriter {
 	font-family: 'American Typewriter', sans-serif;
+}
+
+button:hover, .btn:hover {
+    cursor: pointer;
 }
 
 .dotted {

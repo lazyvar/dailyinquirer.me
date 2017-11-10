@@ -1,30 +1,40 @@
 {% extends "core/base.html" %} {% block content %}
-<div class="row">
-    <div class="mx-auto col-6">
-        {% if user.is_authenticated %}
-        <p> You are already logged in silly </p>
-        {% else %} {% if form.errors %} {% for field in form %} {% for error in field.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endif %}
-        <h2>Log in</h2>
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <input type="text" name="username" class="form-control" id="email" placeholder="Email" id="id_username" required="">
+<div class="container">
+    <div class="row justify-content-center bottom-border mb-3">
+        <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
+    </div>
+    <div class="row justify-content-center bottom-border">
+        <div class="col-sm-6">
+            {% if form.errors %} {% for field in form %} {% for error in field.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
             </div>
-            <div class="form-group">
-                <input type="password" class="form-control" name="password" required="" id="id_password" placeholder="Password">
+            {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
             </div>
-            <button type="submit" value="login" class="btn btn-primary btn-block">Login</button>
-            <a href="{% url 'password_reset' %}" class="btn btn-light btn-block">Forgot password?</a>
-            <input type="hidden" name="next" value="{{ next }}" />
-        </form>
+            {% endfor %} {% endif %}
+            <form method="post" action="{% url 'login' %}" class="mb-3">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="username" class="form-control" id="email" placeholder="Email" id="id_username" required="">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-control" name="password" required="" id="id_password" placeholder="Password">
+                </div>
+                <button type="submit" value="login" class="btn btn-primary btn-block">Log in</button>
+                <a href="{% url 'password_reset' %}" class="btn btn-light btn-block">Forgot password?</a>
+                <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+        </div>
+    </div>
+    <div class="row justify-content-between">
+        <div class="col">
+            <p>&copy; Mack Hasz 2017 </p>
+        </div>
+        <div class="col text-right">
+            <p><a href="#" class="footer-link">About</a><a href="#" class="footer-link">Terms</a><a href="#" class="footer-link">Privacy</a></p>
+        </div>
     </div>
 </div>
-{% endif %} {% endblock %}
+{% endblock %}
