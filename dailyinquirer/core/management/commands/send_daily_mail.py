@@ -1,14 +1,18 @@
 from django.core.management.base import BaseCommand, CommandError
 from authentication.models import User
 from core.models import Prompt, Entry
-from django.utils import timezone
+
 from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+
+import pytz
+from datetime import datetime
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        todays_date = timezone.now()
+        todays_date = pytz.utc.localize(datetime.utcnow())
+        todays_hour = todays_date.hour
         todays_day = todays_date.day
         todays_month = todays_date.month
         todays_year = todays_date.year
@@ -28,13 +32,18 @@ class Command(BaseCommand):
         else:
             users = User.objects.all()
             for user in users:
-                plain_text = todays_prompt.question
-                html_content = render_to_string('core/daily_email.html', {
-                    'prompt': todays_prompt,
-                })
-                mail_subject = todays_prompt.question
-                to_email = user.email
-                email = EmailMultiAlternatives(mail_subject, plain_text, 
-                    "The Daily Inquirer <the@dailyinquirer.me>", [to_email])
-                email.attach_alternative(html_content, "text/html")
-                email.send()
+                user_tz = pytz.timezone(user.timezone)
+                local_time = datetime.now(user_tz)
+
+                # 5am local time every day
+                if local_time.hour == 5:
+                    plain_text = todays_prompt.question
+                    html_content = render_to_string('core/daily_email.html', {
+                        'prompt': todays_prompt,
+                    })
+                    mail_subject = todays_prompt.question
+                    to_email = user.email
+                    from_email = "The Daily Inquirer <the@dailyinquirer.me>"
+                    email = EmailMultiAlternatives(mail_subject, plain_text, from_email, [to_email])
+                    email.attach_alternative(html_content, "text/html")
+                    email.send()
