@@ -23,7 +23,7 @@ from core.forms import ResendConfirmationForm
 def index(request):
     if request.user.is_authenticated():
         if request.user.confirmed_email:
-            entries = Entry.objects.filter(author=request.user)
+            entries = Entry.objects.filter(author=request.user).order_by("-pub_date")
             return render(request, 'core/index_logged_in.html', {'entries': entries})
         else:
             logout(request)
