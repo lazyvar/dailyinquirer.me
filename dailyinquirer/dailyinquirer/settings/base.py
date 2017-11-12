@@ -118,7 +118,7 @@ DEFAULT_FROM_EMAIL = 'Beep Boop <beep-boop@dailyinquirer.me>'
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
+STATIC_ROOT = os.path.join(BASE_DIR, 'dist')
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
