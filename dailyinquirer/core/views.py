@@ -149,3 +149,11 @@ def on_incoming_message(request):
                 entry.save()
 
     return HttpResponse('OK')
+
+
+def privacy(request):
+    return render(request, 'core/privacy.html')
+
+
+def terms(request):
+    return render(request, 'core/terms.html')
