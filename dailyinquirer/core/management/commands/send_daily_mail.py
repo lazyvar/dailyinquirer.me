@@ -13,7 +13,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users = User.objects.all()
         for user in users:
-            user_tz = pytz.timezone(user.timezone)
+            
+            try:
+                user_tz = pytz.timezone(user.timezone)
+            except:
+                 return
+
             local_time = datetime.now(user_tz)
 
             # 5am local time every day
