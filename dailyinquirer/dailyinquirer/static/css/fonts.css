@@ -1,27 +1,3 @@
-@font-face {
-    font-family: "Avenir Next";
-    font-weight: 400;
-    src: url("/static/font/AvenirNextLTPro-Cn.otf") format("otf");
-}
-
-@font-face {
-    font-family: "Avenir Next";
-    font-weight: 500;
-    src: url("/static/font/AvenirNextLTPro-MediumCn.otf") format("otf");
-}
-
-@font-face {
-    font-family: "Avenir Next";
-    font-weight: 700;
-    src: url("/static/font/AvenirNextLTPro-DemiCn.otf") format("otf");
-}
-
-@font-face {
-    font-family: "Avenir Next";
-    font-weight: 900;
-    src: url("/static/font/AvenirNextLTPro-BoldCn.otf") format("otf");
-}
-
 /* xs */
 @media (min-width: 0px) {
     h1 {
@@ -95,6 +71,7 @@
     }
 }
 */
+
 .bold {
     font-weight: 900;
 }
