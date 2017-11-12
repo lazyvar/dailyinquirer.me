@@ -1,2 +1,2 @@
-dailyinquirer/dailyinquirer/static/* linguist-vendored
-dailyinquirer/templates/registration/* linguist-vendored
+**/static/** linguist-vendored
+**/templates/** linguist-vendored
