@@ -13,6 +13,8 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
+from core.utils import mail_newsletter
+
 import json
 import pytz
 from datetime import datetime
@@ -93,8 +95,11 @@ def activate(request, uidb64, token):
         user.confirmed_email = True
         user.save()
         login(request, user)
-        message = "Email confrimation success"
-        messages.success(request, message)
+        try: 
+            mail_newsletter(user)
+        except:
+            pass
+
         return redirect('index')
     else:
         return HttpResponse('Activation link is invalid!')

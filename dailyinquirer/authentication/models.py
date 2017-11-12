@@ -3,6 +3,9 @@ from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
 
+import pytz
+from datetime import datetime
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None):
@@ -71,6 +74,14 @@ class User(AbstractBaseUser):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
         return True
+
+    def local_time(self):
+        try:
+            user_tz = pytz.timezone(self.timezone)
+        except:
+            return None
+            
+        return datetime.now(user_tz)
 
     @property
     def is_staff(self):
