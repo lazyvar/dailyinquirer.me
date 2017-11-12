@@ -7,6 +7,8 @@ DEBUG = os.environ.get('DEBUG', False)
 
 ALLOWED_HOSTS = ['dailyinquirer.me', 'www.dailyinquirer.me']
 
+SECURE_SSL_REDIRECT = True
+
 # db
 
 db_from_env = dj_database_url.config()
