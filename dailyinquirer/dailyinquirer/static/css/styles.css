@@ -2,7 +2,6 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
-
 /* xs */
 @media (min-width: 0px) {
     .step {
@@ -53,7 +52,7 @@ p {
 }
 
 .typewriter {
-	font-family: 'American Typewriter', sans-serif;
+	font-family: 'TypoSlab Irregular Demo', sans-serif;
 }
 
 button:hover, .btn:hover {

@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "TypoSlab Irregular Demo";
+  src: url("/static/font/TypoSlab_Irregular_Demo.otf") format("opentype");
+}
+
 /* xs */
 @media (min-width: 0px) {
     h1 {
