@@ -3,7 +3,7 @@
     <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
 </div>
 <div class="row bottom-border justify-content-center mt-0" style="padding-bottom: 6px;">
-    <a href="/logout">{{ user.email }}</a>
+    <p class="mb-0">{{ user.email }} - <a href="/logout">logout</a></p>
 </div>
 {% if entries|length > 0 %} {% for entry in entries %}
 <div class="row justify-content-start">
