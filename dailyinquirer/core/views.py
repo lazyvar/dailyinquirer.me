@@ -9,7 +9,6 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from authentication.tokens import account_activation_token
 from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
-from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
@@ -22,11 +21,14 @@ from datetime import datetime
 from core.models import Entry, Prompt
 from core.forms import ResendConfirmationForm
 
+
 def index(request):
     if request.user.is_authenticated():
         if request.user.confirmed_email:
-            entries = Entry.objects.filter(author=request.user).order_by("-pub_date")
-            return render(request, 'core/index_logged_in.html', {'entries': entries})
+            entries = Entry.objects.filter(author=request.user).\
+                order_by("-pub_date")
+            return render(request, 'core/index_logged_in.html',
+                          {'entries': entries})
         else:
             logout(request)
             return redirect('unconfirmed_email')
@@ -43,14 +45,22 @@ def register(request):
             if form.is_valid():
                 user = form.save()
                 send_activation_email(request, user)
-                return render(request, 'registration/activation_email_sent.html', {'email': user.email})
+                template = 'registration/activation_email_sent.html'
+                context = {'email': user.email}
+                return render(request, template, context)
             else:
-                return render(request, 'registration/register.html', {'form': form, 'timezones': pytz.common_timezones})
+                template = 'registration/register.html'
+                context = {'form': form, 'timezones': pytz.common_timezones}
+                return render(request, template, context)
         else:
-            return render(request, 'registration/register.html', {'timezones': pytz.common_timezones})
+            template = 'registration/register.html'
+            context = {'timezones': pytz.common_timezones}
+            return render(request, template, context)
+
 
 def unconfirmed_email(request):
     return render(request, 'registration/user_unconfirmed.html')
+
 
 def resend_confirmation(request):
     if request.method == 'POST':
@@ -65,11 +75,16 @@ def resend_confirmation(request):
             if user is not None:
                 send_activation_email(request, user)
 
-            return render(request, 'registration/activation_email_sent.html', {'email': email})
+            template = 'registration/activation_email_sent.html'
+            context = {'email': email}
+            return render(request, template, context)
         else:
-            return render(request, 'registration/resend_confirmation.html', {'form': form})
+            template = 'registration/resend_confirmation.html'
+            context = {'form': form}
+            return render(request, template, context)
     else:
         return render(request, 'registration/resend_confirmation.html')
+
 
 def send_activation_email(request, user):
     current_site = get_current_site(request)
@@ -81,7 +96,10 @@ def send_activation_email(request, user):
     })
     mail_subject = 'Activate your Daily Inquirer Account'
     to_email = user.email
-    email = EmailMessage(mail_subject, message, "Beep Boop <beep-boop@dailyinquirer.me>", [to_email])
+    email = EmailMessage(mail_subject,
+                         message,
+                         "Beep Boop <beep-boop@dailyinquirer.me>",
+                         [to_email])
     email.send()
 
 
@@ -95,7 +113,7 @@ def activate(request, uidb64, token):
         user.confirmed_email = True
         user.save()
         login(request, user)
-        try: 
+        try:
             mail_newsletter(user)
         except:
             pass
@@ -137,20 +155,25 @@ def on_incoming_message(request):
                 todays_year = local_time.year
 
             try:
-                todays_prompt = Prompt.objects.get(mail_day__day=todays_day, 
-                mail_day__month=todays_month, mail_day__year=todays_year)
+                todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
+                                                   mail_day__month=todays_month,
+                                                   mail_day__year=todays_year)
             except Prompt.DoesNotExist:
                 todays_prompt = None
 
             try:
-                entry_exists = Entry.objects.get(pub_date__day=todays_day, 
-                    pub_date__month=todays_month, pub_date__year=todays_year, author=user)
+                entry_exists = Entry.objects.get(pub_date__day=todays_day,
+                                                 pub_date__month=todays_month,
+                                                 pub_date__year=todays_year,
+                                                 author=user)
             except Entry.DoesNotExist:
                 entry_exists = None
 
             if entry_exists is None:
-                entry = Entry(content=stripped_text, author=user,
-                    prompt=todays_prompt, pub_date=timezone.now())
+                entry = Entry(content=stripped_text,
+                              author=user,
+                              prompt=todays_prompt,
+                              pub_date=timezone.now())
                 entry.save()
 
     return HttpResponse('OK')
