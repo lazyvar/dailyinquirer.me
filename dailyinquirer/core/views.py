@@ -4,6 +4,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from authentication.models import User
+from django.contrib.auth.decorators import login_required
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from authentication.tokens import account_activation_token
@@ -12,14 +13,14 @@ from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
+from core.models import Entry, Prompt
+from core.forms import ResendConfirmationForm
 from core.utils import mail_newsletter
+
+from datetime import datetime
 
 import json
 import pytz
-from datetime import datetime
-
-from core.models import Entry, Prompt
-from core.forms import ResendConfirmationForm
 
 
 def index(request):
@@ -34,6 +35,11 @@ def index(request):
             return redirect('unconfirmed_email')
     else:
         return render(request, 'core/index.html')
+
+
+@login_required
+def settings(request):
+    return render(request, 'core/settings.html')
 
 
 def register(request):

@@ -8,6 +8,7 @@ urlpatterns = [
     url(r'^messages/', views.on_incoming_message, name='messages'),
     url(r'^terms/', views.terms, name='terms'),
     url(r'^privacy/', views.privacy, name='privacy'),
+    url(r'^settings/', views.settings, name='settings'),
     url(r'^resend_confirmation/', views.resend_confirmation,
         name='resend_confirmation'),
     url(r'^unconfirmed_email/', views.unconfirmed_email,
