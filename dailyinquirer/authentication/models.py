@@ -80,7 +80,7 @@ class User(AbstractBaseUser):
             user_tz = pytz.timezone(self.timezone)
         except:
             return None
-            
+
         return datetime.now(user_tz)
 
     @property

@@ -1,10 +1,7 @@
 from core.models import Prompt
-from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 
 from django.template.loader import render_to_string
-
-import pytz
-from datetime import datetime
 
 
 def mail_newsletter(user):
@@ -18,7 +15,10 @@ def mail_newsletter(user):
         mail_subject = todays_prompt.question
         to_email = user.email
         from_email = "The Daily Inquirer <the@dailyinquirer.me>"
-        email = EmailMultiAlternatives(mail_subject, plain_text, from_email, [to_email])
+        email = EmailMultiAlternatives(mail_subject,
+                                       plain_text,
+                                       from_email,
+                                       [to_email])
         email.attach_alternative(html_content, "text/html")
         email.send()
 
@@ -30,7 +30,8 @@ def prompt_for_datetime(local_time):
 
     try:
         todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
-            mail_day__month=todays_month, mail_day__year=todays_year)
+                                           mail_day__month=todays_month,
+                                           mail_day__year=todays_year)
     except Prompt.DoesNotExist:
         todays_prompt = None
 
