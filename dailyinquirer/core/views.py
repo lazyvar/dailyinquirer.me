@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
 from core.models import Entry, Prompt
-from core.forms import ResendConfirmationForm
+from core.forms import ResendConfirmationForm, SettingsForm
 from core.utils import mail_newsletter
 
 from datetime import datetime
@@ -39,7 +39,25 @@ def index(request):
 
 @login_required
 def settings(request):
-    return render(request, 'core/settings.html')
+
+    if request.method == 'POST':
+        form = SettingsForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.is_subscribed = form.cleaned_data['subscribed']
+            user.timezone = form.cleaned_data['timezone']
+            user.save()
+
+            context = {'success': True, 'timezones': pytz.common_timezones}
+            return render(request, 'core/settings.html', context)
+        else:
+            template = 'core/settings.html'
+            context = {'form': form, 'timezones': pytz.common_timezones}
+            return render(request, template, context)
+    else:
+        context = {'timezones': pytz.common_timezones}
+
+    return render(request, 'core/settings.html', context)
 
 
 def register(request):

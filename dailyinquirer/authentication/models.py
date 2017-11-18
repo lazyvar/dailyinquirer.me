@@ -3,8 +3,9 @@ from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
 
-import pytz
 from datetime import datetime
+
+import pytz
 
 
 class UserManager(BaseUserManager):
@@ -46,6 +47,7 @@ class User(AbstractBaseUser):
     confirmed_email = models.BooleanField(default=False)
     mail_time = models.IntegerField(default=360)
     is_public = models.BooleanField(default=True)
+    is_subscribed = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
