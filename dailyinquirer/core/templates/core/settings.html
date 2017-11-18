@@ -42,15 +42,16 @@
                     {% endwith %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary btn-block mb-2">Update settings</button>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-bottom: -0.5rem;">Update settings</button>
         </form>        
             <form action="/password_reset/" method="post">
             {% csrf_token %}
             <div class="form-group">
                 <input type="hidden" class="form-control" placeholder="Email" name="email" maxlength="254" required="" id="id_email" value="{{ user.email }}">
             </div>
-            <input type="submit" class="btn btn-primary btn-block mb-3" value="Reset password" />
+            <input type="submit" class="btn btn-light btn-block mb-2" value="Reset password" />
         </form>
+        <a href="/logout/" class="btn btn-light btn-block mb-2">Logout</a>
     </div>
 </div>
 
