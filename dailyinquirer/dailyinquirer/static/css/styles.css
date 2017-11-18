@@ -37,6 +37,24 @@ body {
     }
 }*/
 
+.btn-primary {
+    background-color: firebrick;
+    border-color: firebrick;
+}
+
+.btn-primary:hover {
+    background-color: #801919;
+    border-color: #801919;
+}
+
+a {
+    color: firebrick;
+}
+
+a:hover {
+    color: #801919
+}
+
 p {
 	font-size: 0.85em;
 }
@@ -60,7 +78,11 @@ button:hover, .btn:hover {
 }
 
 .dotted {
-	border-bottom: 1px solid #007bff;
+    border-bottom: 1px solid firebrick;
+}
+
+.dotted:hover {
+    border-bottom: 1px solid #801919;
 }
 
 .bottom-border {
