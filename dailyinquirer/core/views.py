@@ -179,29 +179,29 @@ def on_incoming_message(request):
                 todays_month = local_time.month
                 todays_year = local_time.year
 
-            try:
-                todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
-                                                   mail_day__month=todays_month,
-                                                   mail_day__year=todays_year)
-            except Prompt.DoesNotExist:
-                todays_prompt = None
-
-
-            if todays_prompt is not None:
                 try:
-                    entry_exists = Entry.objects.get(pub_date__day=todays_day,
-                                                     pub_date__month=todays_month,
-                                                     pub_date__year=todays_year,
-                                                     author=user)
-                except Entry.DoesNotExist:
-                    entry_exists = None
+                    todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
+                                                       mail_day__month=todays_month,
+                                                       mail_day__year=todays_year)
+                except Prompt.DoesNotExist:
+                    todays_prompt = None
 
-                if entry_exists is None:
-                    entry = Entry(content=stripped_text,
-                                  author=user,
-                                  prompt=todays_prompt,
-                                  pub_date=timezone.now())
-                    entry.save()
+
+                if todays_prompt is not None:
+                    try:
+                        entry_exists = Entry.objects.get(pub_date__day=todays_day,
+                                                         pub_date__month=todays_month,
+                                                         pub_date__year=todays_year,
+                                                         author=user)
+                    except Entry.DoesNotExist:
+                        entry_exists = None
+
+                    if entry_exists is None:
+                        entry = Entry(content=stripped_text,
+                                      author=user,
+                                      prompt=todays_prompt,
+                                      pub_date=timezone.now())
+                        entry.save()
 
     return HttpResponse('OK')
 
