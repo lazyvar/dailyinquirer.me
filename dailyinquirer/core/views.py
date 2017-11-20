@@ -170,6 +170,7 @@ def on_incoming_message(request):
             except User.DoesNotExist:
                 user = None
 
+
             if user is not None:
                 user_tz = pytz.timezone(user.timezone)
                 local_time = datetime.now(user_tz)
@@ -185,20 +186,22 @@ def on_incoming_message(request):
             except Prompt.DoesNotExist:
                 todays_prompt = None
 
-            try:
-                entry_exists = Entry.objects.get(pub_date__day=todays_day,
-                                                 pub_date__month=todays_month,
-                                                 pub_date__year=todays_year,
-                                                 author=user)
-            except Entry.DoesNotExist:
-                entry_exists = None
 
-            if entry_exists is None:
-                entry = Entry(content=stripped_text,
-                              author=user,
-                              prompt=todays_prompt,
-                              pub_date=timezone.now())
-                entry.save()
+            if todays_prompt is not None:
+                try:
+                    entry_exists = Entry.objects.get(pub_date__day=todays_day,
+                                                     pub_date__month=todays_month,
+                                                     pub_date__year=todays_year,
+                                                     author=user)
+                except Entry.DoesNotExist:
+                    entry_exists = None
+
+                if entry_exists is None:
+                    entry = Entry(content=stripped_text,
+                                  author=user,
+                                  prompt=todays_prompt,
+                                  pub_date=timezone.now())
+                    entry.save()
 
     return HttpResponse('OK')
 
