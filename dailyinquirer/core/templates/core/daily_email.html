@@ -14,6 +14,11 @@
         font-size: 64px;
     }
 
+    h3 {
+        font-family: "Open Sans";
+        font-size: 18px;
+    }
+
     .prompt {
         font-family: "Open Sans";
         color: firebrick;
@@ -32,8 +37,11 @@
 <body>
     <div class="container">
         <h1>The Daily Inquirer</h1>
+        <h3>{{ prompt.category }}</h3>
+        <br>
         <h2 class="prompt">{{ prompt.question }}</h2>
-        <br><br>
+        <br>
+        <br>
         <p><a href="https://www.dailyinquirer.me/settings/">Unsubscribe</a></p>
     </div>
 </body>
