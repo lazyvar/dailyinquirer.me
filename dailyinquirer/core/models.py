@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils.formats import date_format
+
 from authentication.models import User
 
 
@@ -19,4 +21,7 @@ class Entry(models.Model):
     prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT)
 
     def __str__(self):
-        return self.content[:16]
+        date = date_format(self.pub_date,
+                           format='SHORT_DATE_FORMAT',
+                           use_l10n=True)
+        return f"{self.author.email} - {self.prompt.question[:12]} - {date}"
