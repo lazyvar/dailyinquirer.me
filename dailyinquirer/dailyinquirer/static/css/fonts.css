@@ -77,6 +77,10 @@
 }
 */
 
+.hack {
+    font-family: initial;
+}
+
 .bold {
     font-weight: 900;
 }
