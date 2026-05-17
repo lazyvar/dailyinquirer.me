@@ -11,6 +11,7 @@ from authentication.models import User
 from authentication.tokens import account_activation_token
 
 from core.models import Entry, Prompt
+from core.utils import mail_newsletter
 
 
 class EmailConfirmationTests(TestCase):
@@ -222,3 +223,40 @@ class IncomingMessageTests(TestCase):
             {'sender': 'writer@example.com', 'stripped-text': 'second'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Entry.objects.count(), 1)
+
+
+class MailNewsletterTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='nl@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.save()
+
+    def test_returns_prompt_and_sends_when_prompt_exists(self):
+        prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+        result = mail_newsletter(self.user)
+
+        self.assertEqual(result, prompt)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('nl@example.com', mail.outbox[0].to)
+
+    def test_returns_none_and_sends_nothing_when_no_prompt(self):
+        result = mail_newsletter(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_returns_none_when_user_has_no_valid_timezone(self):
+        self.user.timezone = 'Not/AZone'
+        self.user.save()
+        Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+        result = mail_newsletter(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)

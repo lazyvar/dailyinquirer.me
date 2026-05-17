@@ -5,22 +5,28 @@ from django.template.loader import render_to_string
 
 
 def mail_newsletter(user):
-    todays_prompt = prompt_for_datetime(user.local_time())
+    local_time = user.local_time()
+    if local_time is None:
+        return None
 
-    if todays_prompt is not None:
-        plain_text = todays_prompt.question
-        html_content = render_to_string('core/daily_email.html', {
-            'prompt': todays_prompt,
-        })
-        mail_subject = todays_prompt.question
-        to_email = user.email
-        from_email = "The Daily Inquirer <the@dailyinquirer.me>"
-        email = EmailMultiAlternatives(mail_subject,
-                                       plain_text,
-                                       from_email,
-                                       [to_email])
-        email.attach_alternative(html_content, "text/html")
-        email.send()
+    todays_prompt = prompt_for_datetime(local_time)
+    if todays_prompt is None:
+        return None
+
+    plain_text = todays_prompt.question
+    html_content = render_to_string('core/daily_email.html', {
+        'prompt': todays_prompt,
+    })
+    mail_subject = todays_prompt.question
+    to_email = user.email
+    from_email = "The Daily Inquirer <the@dailyinquirer.me>"
+    email = EmailMultiAlternatives(mail_subject,
+                                   plain_text,
+                                   from_email,
+                                   [to_email])
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+    return todays_prompt
 
 
 def prompt_for_datetime(local_time):

@@ -9,7 +9,7 @@
 <div class="row justify-content-center main">
     <div class="col">
         <h3 class="typewriter">{{ entry.prompt.question }}</h3>
-        <p>{{ entry.pub_date|date:"M d" }}<em> {{ entry.prompt.category }}</em></p>
+        <p>{{ entry.pub_date|date:"M d, Y" }}<em> {{ entry.prompt.category }}</em></p>
         <p> {{ entry.content|linebreaks }} </p>
     </div>
 </div>
