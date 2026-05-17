@@ -4,9 +4,9 @@
 
 **Goal:** Restore the reply-to-prompt feature — a subscriber's reply to the daily email becomes a journal `Entry` — using AWS SES for inbound mail.
 
-**Architecture:** SES receives mail at `the@dailyinquirer.me` via an MX record; a receipt rule stores the raw MIME to S3 and invokes a container-image Lambda. The Lambda parses the message, strips quoted history/signature with talon, and POSTs `sender` + `stripped-text` to the existing `POST /messages/` endpoint, which is hardened with a shared-secret header check.
+**Architecture:** SES receives mail at `the@dailyinquirer.me` via an MX record; a receipt rule stores the raw MIME to S3 and invokes a plain-zip Lambda. The Lambda parses the message, strips quoted history/signature with email-reply-parser, and POSTs `sender` + `stripped-text` to the existing `POST /messages/` endpoint, which is hardened with a shared-secret header check.
 
-**Tech Stack:** Django 5.2, AWS SES receiving, S3, Lambda (container image, Python 3.12), AWS SAM, talon, Route 53, Fly.io.
+**Tech Stack:** Django 5.2, AWS SES receiving, S3, Lambda (plain zip, Python 3.12), AWS SAM, email-reply-parser, html2text, Route 53, Fly.io.
 
 **Design doc:** `docs/superpowers/specs/2026-05-17-inbound-email-design.md`
 
@@ -233,7 +233,6 @@ Builds the Lambda that parses raw MIME and POSTs to `/messages/`. The parse-and-
 **Files:**
 - Create: `infra/inbound-email/lambda/requirements.txt`
 - Create: `infra/inbound-email/lambda/app.py`
-- Create: `infra/inbound-email/lambda/Dockerfile`
 - Create: `infra/inbound-email/lambda/tests/__init__.py`
 - Create: `infra/inbound-email/lambda/tests/test_app.py`
 - Create: `infra/inbound-email/lambda/tests/sample-reply.eml`
@@ -243,10 +242,11 @@ Builds the Lambda that parses raw MIME and POSTs to `/messages/`. The parse-and-
 `infra/inbound-email/lambda/requirements.txt`:
 
 ```
-talon
+email-reply-parser
+html2text
 ```
 
-(`boto3` is preinstalled in the Lambda base image and is imported lazily inside `handler`, so it is not listed — this keeps the local test venv small.)
+(`boto3` is preinstalled in the Lambda runtime and is imported lazily inside `handler`, so it is not listed — this keeps the local test venv small.)
 
 - [ ] **Step 2: Create the test fixture**
 
@@ -284,7 +284,7 @@ FIXTURE = os.path.join(os.path.dirname(__file__), 'sample-reply.eml')
 
 
 class ExtractTests(unittest.TestCase):
-    def test_extracts_sender_and_strips_quoted_history(self):
+    def test_extracts_sender_and_strips_quotes_and_signature(self):
         with open(FIXTURE, 'rb') as handle:
             raw = handle.read()
 
@@ -292,15 +292,34 @@ class ExtractTests(unittest.TestCase):
 
         self.assertEqual(sender, 'writer@example.com')
         self.assertIn('I learned how SES inbound works.', text)
+        # quoted history removed
         self.assertNotIn('wrote:', text)
         self.assertNotIn('What did you learn today?', text)
+        # signature removed
+        self.assertNotIn('Sent from a journaling app', text)
 
+    def test_handles_html_only_reply(self):
+        raw = (
+            b'From: Jane Writer <writer@example.com>\r\n'
+            b'To: The Daily Inquirer <the@dailyinquirer.me>\r\n'
+            b'Subject: Re: What did you learn today?\r\n'
+            b'Content-Type: text/html; charset="UTF-8"\r\n'
+            b'\r\n'
+            b'<div dir="ltr">I learned how SES inbound works.</div>\r\n'
+            b'<blockquote class="gmail_quote">'
+            b'<div>On Sun, May 17, 2026 The Daily Inquirer wrote:</div>'
+            b'<div>What did you learn today?</div>'
+            b'</blockquote>\r\n'
+        )
 
-if __name__ == '__main__':
-    unittest.main()
+        sender, text = extract_sender_and_text(raw)
+
+        self.assertEqual(sender, 'writer@example.com')
+        self.assertIn('I learned how SES inbound works.', text)
+        self.assertNotIn('What did you learn today?', text)
 ```
 
-- [ ] **Step 5: Create a venv, install talon, run the test to verify it fails**
+- [ ] **Step 5: Create a venv, install dependencies, run the test to verify it fails**
 
 ```bash
 cd infra/inbound-email/lambda
@@ -310,8 +329,6 @@ python3 -m venv .venv
 ```
 
 Expected: FAIL — `ModuleNotFoundError: No module named 'app'` (`app.py` does not exist yet).
-
-Note: if `pip install talon` fails building a C-extension dependency, pin to a talon release whose dependencies ship pure-Python or have wheels for this platform, then re-run. Use superpowers:systematic-debugging if needed.
 
 - [ ] **Step 6: Write the handler**
 
@@ -331,13 +348,14 @@ import urllib.error
 import urllib.request
 from email.utils import parseaddr
 
-import talon
-from talon import quotations, signature
-
-talon.init()
+import html2text
+from email_reply_parser import EmailReplyParser
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+# Must match the SES receipt rule's S3 action ObjectKeyPrefix in template.yaml.
+S3_KEY_PREFIX = 'inbound/'
 
 
 def _decode_part(part):
@@ -363,23 +381,30 @@ def _get_body(msg, content_type):
     return None
 
 
+def _html_to_text(html):
+    """Render HTML to text, with quoted blocks as '>'-prefixed lines."""
+    converter = html2text.HTML2Text()
+    converter.body_width = 0  # don't hard-wrap lines
+    return converter.handle(html)
+
+
 def extract_sender_and_text(raw_bytes):
-    """Parse raw MIME; return (sender_email, stripped_reply_text)."""
+    """Parse raw MIME; return (sender_email, stripped_reply_text).
+
+    Quoted history and signature are removed with email-reply-parser.
+    """
     msg = email.message_from_bytes(raw_bytes)
     sender = parseaddr(msg.get('From', ''))[1].lower()
 
     plain = _get_body(msg, 'text/plain')
-    if plain is not None:
-        reply = quotations.extract_from_plain(plain)
-    else:
+    if not plain or not plain.strip():
         html = _get_body(msg, 'text/html')
-        if html is None:
-            return sender, ''
-        from talon.utils import html_to_text
-        as_bytes = html_to_text(quotations.extract_from_html(html))
-        reply = as_bytes.decode('utf-8', errors='replace') if as_bytes else ''
+        if html:
+            plain = _html_to_text(html)
 
-    reply = signature.extract(reply, sender)[0] or reply
+    if not plain:
+        return sender, ''
+    reply = EmailReplyParser.parse_reply(plain)
     return sender, reply.strip()
 
 
@@ -399,12 +424,13 @@ def handler(event, context):
     endpoint = os.environ['MESSAGES_ENDPOINT']
     secret = os.environ['SHARED_SECRET']
 
-    key = 'inbound/' + message_id
+    key = S3_KEY_PREFIX + message_id
     raw = boto3.client('s3').get_object(Bucket=bucket, Key=key)['Body'].read()
 
     sender, text = extract_sender_and_text(raw)
     if not sender or not text:
-        logger.warning('Message %s has no usable sender/body', message_id)
+        logger.warning('Message %s skipped: sender=%r text_len=%d',
+                        message_id, sender, len(text))
         return {'status': 'skipped'}
 
     body = json.dumps({'sender': sender, 'stripped-text': text}).encode('utf-8')
@@ -417,7 +443,10 @@ def handler(event, context):
             logger.info('POST %s -> %s', endpoint, response.status)
             return {'status': 'posted', 'code': response.status}
     except urllib.error.HTTPError as exc:
-        logger.error('POST %s failed: %s', endpoint, exc.code)
+        logger.error('POST %s failed: HTTP %s', endpoint, exc.code)
+        raise
+    except urllib.error.URLError as exc:
+        logger.error('POST %s failed: %s', endpoint, exc.reason)
         raise
 ```
 
@@ -428,25 +457,9 @@ cd infra/inbound-email/lambda
 .venv/bin/python -m unittest discover -s tests -t . -v
 ```
 
-Expected: PASS — `test_extracts_sender_and_strips_quoted_history`.
+Expected: PASS — `test_extracts_sender_and_strips_quotes_and_signature` and `test_handles_html_only_reply`.
 
-- [ ] **Step 8: Write the Dockerfile**
-
-`infra/inbound-email/lambda/Dockerfile`:
-
-```dockerfile
-# Inbound-email Lambda: parses replies with talon and POSTs to /messages/.
-FROM public.ecr.aws/lambda/python:3.12
-
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
-RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
-
-COPY app.py ${LAMBDA_TASK_ROOT}/
-
-CMD ["app.handler"]
-```
-
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add infra/inbound-email/lambda
@@ -530,9 +543,11 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: dailyinquirer-inbound-email
-      PackageType: Image
+      Runtime: python3.12
+      Handler: app.handler
+      CodeUri: ./lambda
       Architectures: [arm64]
-      MemorySize: 1024
+      MemorySize: 256
       Timeout: 30
       Environment:
         Variables:
@@ -544,10 +559,6 @@ Resources:
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub '${InboundBucket.Arn}/inbound/*'
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: ./lambda
-      DockerTag: latest
 
   InboundFunctionSesPermission:
     Type: AWS::Lambda::Permission
@@ -592,7 +603,7 @@ Resources:
       Type: MX
       TTL: '300'
       ResourceRecords:
-        - 10 inbound-smtp.us-east-1.amazonaws.com
+        - 10 inbound-smtp.us-east-1.amazonaws.com.
 
 Outputs:
   FunctionName:
@@ -694,14 +705,14 @@ aws ses describe-active-receipt-rule-set --region us-east-1 --profile dest
 
 Expected: an error or empty result meaning no rule set is active. If a rule set IS already active, do not create a competing one — instead add the `deliver-the` rule to that set and skip Step 4. Pause and use superpowers:systematic-debugging to decide.
 
-- [ ] **Step 2: Build the Lambda image**
+- [ ] **Step 2: Build the Lambda zip**
 
 ```bash
 cd infra/inbound-email
-sam build
+sam build --use-container
 ```
 
-Expected: `Build Succeeded`. Requires Docker running.
+Expected: `Build Succeeded`. `--use-container` ensures the Python 3.12 zip builds correctly regardless of local Python version.
 
 - [ ] **Step 3: Deploy the stack**
 
@@ -709,7 +720,7 @@ Expected: `Build Succeeded`. Requires Docker running.
 sam deploy \
   --stack-name dailyinquirer-inbound-email \
   --region us-east-1 --profile dest \
-  --resolve-s3 --resolve-image-repos \
+  --resolve-s3 \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides SharedSecret="<SECRET>" \
   --no-confirm-changeset

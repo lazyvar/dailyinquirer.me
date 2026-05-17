@@ -2,6 +2,7 @@
 
 **Date:** 2026-05-17
 **Status:** Approved design
+**Revised:** 2026-05-17 — switched reply parser from talon to email-reply-parser; Lambda is a plain zip, not a container image.
 
 ## Goal
 
@@ -20,8 +21,8 @@ re-implemented. This design re-implements inbound on SES.
 | Topic | Decision |
 |-------|----------|
 | Provisioning | AWS SAM template committed to the repo (`infra/inbound-email/`) |
-| Reply parsing | `talon` (Mailgun's library) — reproduces the original `stripped-text` |
-| Lambda packaging | Container-image Lambda (talon + lxml/scikit-learn exceed the zip limit) |
+| Reply parsing | `email-reply-parser` + `html2text` — pure-Python, strips quoted history and signatures |
+| Lambda packaging | Plain-zip Lambda (`Runtime: python3.12`, `Handler: app.handler`, `CodeUri: ./lambda`) |
 | SES action pattern | S3 action + Lambda action in one receipt rule |
 | Region | `us-east-1` (SES domain identity already verified there) |
 | Endpoint security | Shared-secret header check on `/messages/` |
@@ -44,11 +45,11 @@ SES inbound-smtp.us-east-1
        ├─ action 1: S3 action     → writes raw MIME to s3://…/inbound/<messageId>
        └─ action 2: Lambda action → invokes inbound-email Lambda
             ↓
-   Lambda (container image, Python 3.12 + talon)
+   Lambda (plain zip, Python 3.12 + email-reply-parser + html2text)
    • drop if spamVerdict/virusVerdict == FAIL
    • GET the S3 object, parse MIME (stdlib email)
-   • extract sender from the From: header, body from text/plain (or html)
-   • talon: strip quoted history + signature  → stripped-text
+   • extract sender from the From: header, body from text/plain (or html via html2text)
+   • email-reply-parser: strip quoted history + signature  → stripped-text
    • POST https://dailyinquirer.me/messages/  {sender, stripped-text}
        header  X-Inbound-Secret: <shared secret>
             ↓
@@ -104,7 +105,9 @@ Before creating the rule set, check whether an active rule set already exists
 
 ### 4. Lambda — `dailyinquirer-inbound-email`
 
-Container-image Lambda, Python 3.12 base, 1024 MB memory, 30 s timeout.
+Plain-zip Lambda, Python 3.12 runtime, 256 MB memory, 30 s timeout.
+Dependencies (`email-reply-parser`, `html2text`) are pure-Python with no
+native extensions; SAM builds the zip from `CodeUri: ./lambda`.
 
 Behavior:
 
@@ -114,19 +117,16 @@ Behavior:
 3. `GET` the raw message from `s3://dailyinquirer-inbound-email/inbound/<messageId>`.
 4. Parse the MIME with the stdlib `email` package.
 5. Extract the sender address from the `From:` header (address portion only).
-6. Extract the body: prefer the `text/plain` part; fall back to `text/html`.
-7. Strip quoted history and signature with talon
-   (`talon.quotations.extract_from` for plain or html, then
-   `talon.signature.extract` after `talon.init()`).
+6. Extract the body: prefer the `text/plain` part; fall back to `text/html`,
+   converted to plain text via `html2text`.
+7. Strip quoted history and signature with `email-reply-parser`
+   (`EmailReplyParser.parse_reply`).
 8. `POST` JSON `{"sender": …, "stripped-text": …}` to
    `https://dailyinquirer.me/messages/` with header
    `X-Inbound-Secret: <shared secret>`. Uses stdlib `urllib.request` — no
    `requests` dependency.
 9. Log the response status. Non-2xx and exceptions are logged to CloudWatch;
    SES async-invoke retries twice. No DLQ in v1.
-
-`talon.init()` (loads the bundled ML signature models) runs once at module
-import / cold start.
 
 ### 5. IAM
 
@@ -173,9 +173,8 @@ infra/inbound-email/
   template.yaml          # SAM/CloudFormation: bucket, rule set + rule, Lambda,
                          # IAM, Lambda permission, MX RecordSet
   lambda/
-    Dockerfile           # python:3.12 Lambda base image + talon
     app.py               # handler described in component 4
-    requirements.txt     # talon
+    requirements.txt     # email-reply-parser, html2text
     tests/
       test_app.py        # local unit test of parse + strip (no AWS)
       sample-reply.eml   # fixture: a Gmail reply to a daily prompt
@@ -222,9 +221,11 @@ After deploying the SAM stack and the Django changes:
 - **S3-only action + S3 `ObjectCreated` trigger** — viable, but the SES Lambda
   action hands us structured spam/virus verdicts directly without re-parsing
   SES headers; the S3 + Lambda pattern is cleaner.
-- **Plain-zip Lambda** — rejected: talon's dependency tree (lxml,
-  scikit-learn, numpy) exceeds the 250 MB unzipped limit; container image is
-  required.
+- **talon** (Mailgun's reply-parsing library) — tried and abandoned: the
+  package is unmaintained and its dependency tree (lxml, scikit-learn, numpy)
+  has broken pins that fail to install cleanly. Replaced with
+  `email-reply-parser` + `html2text`, both pure-Python with zero native
+  dependencies, which also eliminates the need for a container-image Lambda.
 
 ## Out of scope
 
