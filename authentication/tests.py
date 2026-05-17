@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
@@ -39,3 +39,17 @@ class AdminSendPromptTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    })
+    def test_change_page_renders_send_prompt_button(self):
+        change_url = reverse('admin:authentication_user_change',
+                             args=[self.target.pk])
+
+        response = self.client.get(change_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.send_url)
+        self.assertContains(response, "Send today's prompt")
