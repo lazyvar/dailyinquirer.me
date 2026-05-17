@@ -88,7 +88,80 @@
   </div>
 
   <div class="editorial-layout">
-    {# Task 6 fills this in #}
+    {% now "l" as today %}
+
+    <header class="ed-hero">
+      <p class="ed-kicker">The Daily Inquirer</p>
+      <h1 class="ed-headline">Write something <em>worth keeping.</em></h1>
+      <p class="ed-sub">One thoughtful writing prompt in your inbox every
+        morning. Reply, and your words are saved to a private page that's
+        yours alone.</p>
+      <div class="ed-cta">
+        <a class="ed-btn" href="/register/">Get started — it's free</a>
+        <p class="ed-signin">Already registered? <a href="/login/">Log in.</a></p>
+      </div>
+    </header>
+
+    <section class="ed-section">
+      <p class="ed-label">How it works</p>
+      <div class="ed-steps">
+        <div class="ed-card ed-step">
+          <img src="/static/img/inbox.png" alt="">
+          <h3>Get a prompt</h3>
+          <p>Receive an email with a writing prompt each morning.</p>
+        </div>
+        <div class="ed-card ed-step">
+          <img src="/static/img/send.png" alt="">
+          <h3>Write back</h3>
+          <p>Reply to the email with your response — no app required.</p>
+        </div>
+        <div class="ed-card ed-step">
+          <img src="/static/img/blog.png" alt="">
+          <h3>It's saved</h3>
+          <p>Your response is saved to your private personal page.</p>
+        </div>
+        <div class="ed-card ed-step">
+          <img src="/static/img/cal.png" alt="">
+          <h3>Keep going</h3>
+          <p>Repeat every day and watch your writing improve.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="ed-section ed-about">
+      <p class="ed-label">Why it exists</p>
+      <div class="ed-about__grid">
+        <div class="ed-about__text">
+          <p>This service was created out of a need for
+            <a href="https://mack.cloud">one human</a> to improve his writing.
+            The best way to improve something is to practice, practice,
+            practice. Free writing has its benefits, but it is easier to write
+            when prompted about something.</p>
+          <p>Use it to practice your writing, start a personal journal, or
+            find inspiration. Your entries are private — only you can see them.</p>
+        </div>
+        <img class="ed-about__img" src="/static/img/typing_monkey.png" alt="An illustration of a monkey at a typewriter">
+      </div>
+    </section>
+
+    <section class="ed-section">
+      <p class="ed-label">A week of prompts</p>
+      <div class="ed-prompts">
+        <article class="ed-prompt-card{% if today == 'Monday' %} is-today{% endif %}"><p class="ed-day">Monday</p><p class="ed-genre">Expository</p><p class="ed-text">Explain what pollution is.</p></article>
+        <article class="ed-prompt-card{% if today == 'Tuesday' %} is-today{% endif %}"><p class="ed-day">Tuesday</p><p class="ed-genre">Descriptive</p><p class="ed-text">Describe your first car.</p></article>
+        <article class="ed-prompt-card{% if today == 'Wednesday' %} is-today{% endif %}"><p class="ed-day">Wednesday</p><p class="ed-genre">Persuasive</p><p class="ed-text">Can anything be funny, or are some things off limits?</p></article>
+        <article class="ed-prompt-card{% if today == 'Thursday' %} is-today{% endif %}"><p class="ed-day">Thursday</p><p class="ed-genre">Narrative</p><p class="ed-text">Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p></article>
+        <article class="ed-prompt-card{% if today == 'Friday' %} is-today{% endif %}"><p class="ed-day">Friday</p><p class="ed-genre">Free Write</p><p class="ed-text">Happy Friday! Write about whatever you want.</p></article>
+        <article class="ed-prompt-card{% if today == 'Saturday' %} is-today{% endif %}"><p class="ed-day">Saturday</p><p class="ed-genre">Creative</p><p class="ed-text">Write a haiku about the mailman.</p></article>
+        <article class="ed-prompt-card{% if today == 'Sunday' %} is-today{% endif %}"><p class="ed-day">Sunday</p><p class="ed-genre">Reflective</p><p class="ed-text">Have you ever made a New Year's resolution that you kept?</p></article>
+      </div>
+    </section>
+
+    <section class="ed-final">
+      <h2 class="ed-final__title">Your next page is one prompt away.</h2>
+      <a class="ed-btn" href="/register/">Get started — it's free</a>
+    </section>
+
   </div>
 
   <div class="theme-switch">
