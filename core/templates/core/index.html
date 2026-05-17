@@ -1,85 +1,78 @@
-{% extends "core/base.html" %} {% block content %}
-<div class="row bottom-border">
-</div>
-<div class="row justify-content-center">
-    <div class="col-12 text-center">
-        <h1 class="typewriter bold">The Daily Inquirer</h1>
-        <h3 class="regular">a writing prompt email service</h3>
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/home.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div id="home">
+  {% now "l" as today %}
+
+  <header class="ed-hero">
+    <div class="ed-masthead">
+      <span class="ed-masthead__tab">A daily writing habit</span>
+      <h1 class="ed-masthead__name">The Daily Inquirer</h1>
+      <p class="ed-sub">One thoughtful writing prompt in your inbox every day. Reply, and your words are saved to a private page.</p>
+      <div class="ed-cta">
+        <a class="ed-btn" href="/register/">Get started, it's free</a>
+        <p class="ed-signin">Already registered? <a href="/login/">Log in.</a></p>
+      </div>
     </div>
-</div>
-<div class="row justify-content-center">
-    <div class="col-8 col-sm-6 col-md-4 col-lg-4">
-        <a href="/register/" class="btn btn-primary btn-block btn-sm">Get started</a>
+  </header>
+
+  <section class="ed-section">
+    <p class="ed-label">How it works</p>
+    <div class="ed-steps">
+      <div class="ed-card ed-step">
+        <img src="/static/img/inbox.png" alt="">
+        <h3>Get a prompt</h3>
+        <p>Receive an email with a writing prompt each day.</p>
+      </div>
+      <div class="ed-card ed-step">
+        <img src="/static/img/send.png" alt="">
+        <h3>Write back</h3>
+        <p>Reply to email with your response.</p>
+      </div>
+      <div class="ed-card ed-step">
+        <img src="/static/img/blog.png" alt="">
+        <h3>It's saved</h3>
+        <p>Responses are saved to your personal page.</p>
+      </div>
+      <div class="ed-card ed-step">
+        <img src="/static/img/cal.png" alt="">
+        <h3>Keep going</h3>
+        <p>Repeat every day and improve your writing!</p>
+      </div>
     </div>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-8 col-sm-6 col-md-4 col-lg-4">
-        <p>Already registered? <a class="dotted" href="login">Log in.</a></p>
+  </section>
+
+  <section class="ed-section ed-about">
+    <p class="ed-label">Why it exists</p>
+    <div class="ed-about__grid">
+      <div class="ed-about__text">
+        <p>This service was created out of a need for
+          <a href="https://mack.cloud">one human</a> to improve his writing.
+          The best way to improve something is to practice, practice,
+          practice. Free writing has its benefits, but it is easier to write
+          when prompted about something.</p>
+        <p>Use it to practice your writing, start a personal journal, or find inspiration. If you choose to reply to the email, your response will be saved to this website. Your entries are private, only you can see them.</p>
+      </div>
+      <img class="ed-about__img" src="/static/img/typing_monkey.png" alt="An illustration of a monkey at a typewriter">
     </div>
-</div>
-<div class="row steps bottom-border">
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/inbox.png">
-        <p><strong>1.</strong> Receive email with writing prompt.</p>
+  </section>
+
+  <section class="ed-section">
+    <p class="ed-label">A week of prompts</p>
+    <div class="ed-prompts">
+      <article class="ed-prompt-card{% if today == 'Monday' %} is-today{% endif %}"><p class="ed-day">Monday</p><p class="ed-genre">Expository</p><p class="ed-text">Explain what pollution is.</p></article>
+      <article class="ed-prompt-card{% if today == 'Tuesday' %} is-today{% endif %}"><p class="ed-day">Tuesday</p><p class="ed-genre">Descriptive</p><p class="ed-text">Describe your first car.</p></article>
+      <article class="ed-prompt-card{% if today == 'Wednesday' %} is-today{% endif %}"><p class="ed-day">Wednesday</p><p class="ed-genre">Persuasive</p><p class="ed-text">Can anything be funny, or are some things off limits?</p></article>
+      <article class="ed-prompt-card{% if today == 'Thursday' %} is-today{% endif %}"><p class="ed-day">Thursday</p><p class="ed-genre">Narrative</p><p class="ed-text">Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p></article>
+      <article class="ed-prompt-card{% if today == 'Friday' %} is-today{% endif %}"><p class="ed-day">Friday</p><p class="ed-genre">Free Write</p><p class="ed-text">Happy Friday! Write about whatever you want.</p></article>
+      <article class="ed-prompt-card{% if today == 'Saturday' %} is-today{% endif %}"><p class="ed-day">Saturday</p><p class="ed-genre">Creative</p><p class="ed-text">Write a haiku about the mailman.</p></article>
+      <article class="ed-prompt-card{% if today == 'Sunday' %} is-today{% endif %}"><p class="ed-day">Sunday</p><p class="ed-genre">Reflective</p><p class="ed-text">Have you ever made a New Year's resolution that you kept?</p></article>
     </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/send.png">
-        <p><strong>2.</strong> Reply to email with your response.</p>
-    </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/blog.png">
-        <p><strong>3.</strong> Responses are saved to your personal page.</p>
-    </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/cal.png">
-        <p><strong>4.</strong> Repeat every day and improve your writing!</p>
-    </div>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-sm-6 text-justify">
-        <h3>About</h3>
-        <p>This service was created out of a need for <a href="https://mack.cloud">one human</a> to improve his writing. The best way to improve something is to practice, practice, practice. Free writing has its benefits, but it is easier to write when prompted about something.</p>
-        <p>Use this service to practice your writing, start a personal journal, or find inspiration. If you choose to reply to the email, your response will be saved to this website. Your entries are private, only you can see them.</p>
-    </div>
-    <div class="col-8 col-sm-6 vcenter">
-        <img class="img-fluid mb-4" src="/static/img/typing_monkey.png">
-    </div>
-</div>
-<div class="row bottom-border">
-    <div class="col-6 col-sm-4">
-        <h3>Monday</h3>
-        <p><em style="display: inline;">Expository</em></p>
-        <p>Explain what pollution is.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Tuesday</h3>
-        <p><em style="display: inline;">Descriptive</em></p>
-        <p>Describe your first car.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Wednesday</h3>
-        <p><em style="display: inline;">Persuasive</em></p>
-        <p>Can anything be funny or are some things off limits?</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Thursday</h3>
-        <p><em style="display: inline;">Narrative</em></p>
-        <p>Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Friday</h3>
-        <p><em style="display: inline;">Free Write</em></p>
-        <p>Happy Friday! Write about whatever you want.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Saturday</h3>
-        <p><em style="display: inline;">Creative</em></p>
-        <p>Write a haiku about the mailman.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Sunday</h3>
-        <p><em style="display: inline;">Reflective</em></p>
-        <p>Have you ever made a new year's resolution that you kept?</p>
-    </div>
+  </section>
+
 </div>
 {% endblock %}

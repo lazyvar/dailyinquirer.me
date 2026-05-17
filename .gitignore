@@ -105,7 +105,7 @@ ENV/
 # mypy
 .mypy_cache/
 
-# Brainstorming visual companion
+# Brainstorming companion (local-only)
 .superpowers/
 .venv/
 runserver.log

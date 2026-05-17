@@ -1,6 +1,20 @@
 #!/bin/sh
 set -e
 
-python manage.py migrate --noinput
+# Prefer the project virtualenv, then python3 (local dev), then python (container image).
+if [ -x ".venv/bin/python" ]; then
+    PYTHON=.venv/bin/python
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON=python3
+else
+    PYTHON=python
+fi
+
+$PYTHON manage.py migrate --noinput
+
+# Pass "dev" to run the Django development server (uses settings.local).
+if [ "$1" = "dev" ]; then
+    exec $PYTHON manage.py runserver 0.0.0.0:8000
+fi
 
 exec gunicorn dailyinquirer.wsgi --bind 0.0.0.0:8000
