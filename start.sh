@@ -17,4 +17,8 @@ if [ "$1" = "dev" ]; then
     exec $PYTHON manage.py runserver 0.0.0.0:8000
 fi
 
+# Run the hourly prompt cron alongside the web server (production only — the
+# dev branch above execs and never reaches here).
+supercronic /app/crontab &
+
 exec gunicorn dailyinquirer.wsgi --bind 0.0.0.0:8000

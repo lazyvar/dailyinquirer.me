@@ -1,7 +1,7 @@
-from core.models import Prompt
+from core.models import Prompt, PromptSend
 from django.core.mail import EmailMultiAlternatives
-
 from django.template.loader import render_to_string
+from django.utils import timezone
 
 
 def mail_newsletter(user):
@@ -42,3 +42,34 @@ def prompt_for_datetime(local_time):
         todays_prompt = None
 
     return todays_prompt
+
+
+def send_prompt_to_user(user, force=False):
+    """Send today's prompt to one user, recording the delivery.
+
+    Skips the user if they have already received today's prompt, unless
+    ``force`` is True. Returns the Prompt that was sent, or None when there
+    is nothing to send (no valid timezone, no prompt for today, or already
+    sent and not forced).
+    """
+    local_time = user.local_time()
+    if local_time is None:
+        return None
+
+    todays_prompt = prompt_for_datetime(local_time)
+    if todays_prompt is None:
+        return None
+
+    already_sent = PromptSend.objects.filter(
+        user=user, prompt=todays_prompt).exists()
+    if already_sent and not force:
+        return None
+
+    sent_prompt = mail_newsletter(user)
+    if sent_prompt is None:
+        return None
+
+    PromptSend.objects.update_or_create(
+        user=user, prompt=sent_prompt,
+        defaults={'sent_at': timezone.now()})
+    return sent_prompt

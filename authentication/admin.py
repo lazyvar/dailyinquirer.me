@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import path
 
-from core.utils import mail_newsletter
+from core.utils import send_prompt_to_user
 
 
 class UserCreationForm(forms.ModelForm):
@@ -101,7 +101,7 @@ class UserAdmin(BaseUserAdmin):
     def send_prompt_view(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         try:
-            prompt = mail_newsletter(user)
+            prompt = send_prompt_to_user(user, force=True)
         except Exception as exc:
             messages.error(request, f"Failed to send: {exc}")
         else:

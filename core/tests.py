@@ -1,6 +1,9 @@
 import json
 from datetime import datetime
+from unittest.mock import patch
 
+from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.core import mail
@@ -11,8 +14,9 @@ from django.utils.http import urlsafe_base64_encode
 from authentication.models import User
 from authentication.tokens import account_activation_token
 
-from core.models import Entry, Prompt
-from core.utils import mail_newsletter
+from core.models import Entry, Prompt, PromptSend
+from core.templatetags.entry_extras import unwrap
+from core.utils import mail_newsletter, send_prompt_to_user
 
 
 class EmailConfirmationTests(TestCase):
@@ -317,6 +321,186 @@ class MailNewsletterTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
+class PromptSendModelTests(TestCase):
+    def test_unique_per_user_and_prompt(self):
+        user = User.objects.create_user(
+            email='ps@example.com', password='mostdope1')
+        prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+        PromptSend.objects.create(user=user, prompt=prompt)
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                PromptSend.objects.create(user=user, prompt=prompt)
+
+
+class SendPromptToUserTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='p@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_sends_and_records_when_not_sent_before(self):
+        result = send_prompt_to_user(self.user)
+
+        self.assertEqual(result, self.prompt)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(
+                user=self.user, prompt=self.prompt).count(), 1)
+
+    def test_skips_when_already_sent(self):
+        PromptSend.objects.create(user=self.user, prompt=self.prompt)
+
+        result = send_prompt_to_user(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.user).count(), 1)
+
+    def test_force_resends_even_when_already_sent(self):
+        PromptSend.objects.create(user=self.user, prompt=self.prompt)
+
+        result = send_prompt_to_user(self.user, force=True)
+
+        self.assertEqual(result, self.prompt)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.user).count(), 1)
+
+    def test_returns_none_when_no_prompt_for_today(self):
+        self.prompt.delete()
+
+        result = send_prompt_to_user(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
+
+
+class SendDailyMailCommandTests(TestCase):
+    def _make_user(self, email, timezone_name='UTC'):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.timezone = timezone_name
+        user.confirmed_email = True
+        user.is_subscribed = True
+        user.save()
+        return user
+
+    @patch.object(User, 'local_time')
+    def test_skips_users_before_8am(self, mock_local_time):
+        self._make_user('early@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=6)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
+
+    @patch.object(User, 'local_time')
+    def test_sends_at_or_after_8am(self, mock_local_time):
+        user = self._make_user('due@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=8)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+    @patch.object(User, 'local_time')
+    def test_skips_unconfirmed_and_unsubscribed(self, mock_local_time):
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+
+        unconfirmed = User.objects.create_user(
+            email='unconfirmed@example.com', password='mostdope1')
+        unconfirmed.timezone = 'UTC'
+        unconfirmed.is_subscribed = True
+        unconfirmed.save()
+
+        unsubscribed = User.objects.create_user(
+            email='unsubscribed@example.com', password='mostdope1')
+        unsubscribed.timezone = 'UTC'
+        unsubscribed.confirmed_email = True
+        unsubscribed.is_subscribed = False
+        unsubscribed.save()
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    @patch.object(User, 'local_time')
+    def test_does_not_resend_when_already_sent(self, mock_local_time):
+        user = self._make_user('once@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=8)
+
+        call_command('send_daily_mail')
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+    @patch.object(User, 'local_time')
+    @patch('core.management.commands.send_daily_mail.send_prompt_to_user')
+    def test_one_user_failure_does_not_abort_the_run(
+            self, mock_send, mock_local_time):
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+        self._make_user('a@example.com')
+        self._make_user('b@example.com')
+        mock_send.side_effect = [Exception('boom'), None]
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(mock_send.call_count, 2)
+
+
+class AdminSendPromptButtonTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            email='admin@example.com', password='mostdope1')
+        self.target = User.objects.create_user(
+            email='target@example.com', password='mostdope1')
+        self.target.timezone = 'UTC'
+        self.target.confirmed_email = True
+        self.target.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+        self.client.force_login(self.admin)
+
+    def _send_url(self):
+        return reverse('admin:authentication_user_send_prompt',
+                       kwargs={'pk': self.target.pk})
+
+    def test_button_sends_and_records_a_promptsend(self):
+        response = self.client.get(self._send_url())
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.target).count(), 1)
+
+    def test_button_force_resends_when_already_sent(self):
+        PromptSend.objects.create(user=self.target, prompt=self.prompt)
+
+        response = self.client.get(self._send_url())
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.target).count(), 1)
+
+
 class SettingsPageTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -454,3 +638,46 @@ class DashboardTests(TestCase):
         self._entry(content='something')
         response = self.client.get(reverse('index'), {'q': 'zzzznomatch'})
         self.assertContains(response, 'No entries match')
+
+
+class EntryContentUnwrapTests(TestCase):
+    """The `unwrap` filter de-flows email hard-wrapping so entries fill the card."""
+
+    def test_joins_hard_wrapped_lines_within_a_paragraph(self):
+        wrapped = ("The night was bright, lit by a proud moon.\n"
+                   "The desert town of Winco hasn't\n"
+                   "felt a night like this.")
+        self.assertEqual(
+            unwrap(wrapped),
+            "The night was bright, lit by a proud moon. "
+            "The desert town of Winco hasn't felt a night like this.",
+        )
+
+    def test_keeps_blank_line_paragraph_breaks(self):
+        text = "First paragraph one\ntwo\n\nSecond paragraph"
+        self.assertEqual(unwrap(text), "First paragraph one two\n\nSecond paragraph")
+
+    def test_leaves_flowing_text_untouched(self):
+        flowing = "AWS is a modern marvel and ingenious business move from Amazon."
+        self.assertEqual(unwrap(flowing), flowing)
+
+    def test_normalizes_crlf_and_handles_empty(self):
+        self.assertEqual(unwrap("a\r\nb"), "a b")
+        self.assertEqual(unwrap(""), "")
+        self.assertIsNone(unwrap(None))
+
+    def test_dashboard_renders_hard_wrapped_entry_without_inner_br(self):
+        user = User.objects.create_user(email='wrap@example.com', password='mostdope1')
+        user.timezone = 'UTC'
+        user.confirmed_email = True
+        user.save()
+        prompt = Prompt.objects.create(question='Tell a story.', mail_day=timezone.now())
+        Entry.objects.create(
+            author=user, prompt=prompt, pub_date=timezone.now(),
+            content="The night was bright.\nThe town slept.\n\nThen dawn came.",
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, '<p>The night was bright. The town slept.</p>')
+        self.assertContains(response, '<p>Then dawn came.</p>')
+        self.assertNotContains(response, 'bright.<br>')

@@ -11,6 +11,6 @@
   --danger: #b22222;
   --danger-rgb: 178, 34, 34;
   --paper: #ffffff;        /* card / surface white */
-  --serif: 'Special Elite', Georgia, 'Times New Roman', serif;
-  --body: 'Open Sans', system-ui, sans-serif;
+  --display: 'Special Elite', Georgia, 'Times New Roman', serif;
+  --body: 'Elms Sans', system-ui, sans-serif;
 }

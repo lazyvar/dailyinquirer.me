@@ -36,7 +36,7 @@ CI (`.github/workflows/ci.yml`) runs `python manage.py test` on every PR; pushes
 
 - `local` — `manage.py` default; SQLite, `DEBUG=True`, emails captured in-memory and browsable at `/mailbox/`.
 - `dev` — Mailgun email backend.
-- `prod` — Fly.io: Postgres via `dj-database-url`, AWS SES email, SSL redirect, `www.` → apex redirect middleware. Used by the `Dockerfile`.
+- `prod` — Fly.io: database from `DATABASE_URL` via `dj-database-url` (deployment uses SQLite on the `/data` Fly volume; Postgres works if `DATABASE_URL` points there), AWS SES email via `django-anymail`, SSL redirect, `www.` → apex redirect middleware. Used by the `Dockerfile`.
 
 `prod` reads secrets from env vars: `SECRET_KEY`, `INBOUND_SHARED_SECRET`, AWS credentials (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, read automatically by boto3).
 
@@ -45,13 +45,19 @@ CI (`.github/workflows/ci.yml`) runs `python manage.py test` on every PR; pushes
 Two apps:
 
 - **`authentication`** — custom `User` model (`AUTH_USER_MODEL = 'authentication.User'`). Email is the username; no `username` field. Users carry a `timezone` string; `User.local_time()` returns timezone-aware "now" for that user (returns `None` on an invalid tz — callers must handle this).
-- **`core`** — the prompt/entry domain. `Prompt` has a `mail_day` datetime and optional `category`/`override_html`. `Entry` links a `User` author to a `Prompt` with their reply `content`.
+- **`core`** — the prompt/entry domain. `Prompt` has a `mail_day` datetime and optional `category`/`override_html`. `Entry` links a `User` author to a `Prompt` with their reply `content`. `PromptSend` records one delivery of a `Prompt` to a `User`, with a unique `(user, prompt)` constraint that makes it the dedup ledger for the daily send.
 
-Both model files mix in `core.mixins.TimestampedModel` for `created_at`/`updated_at`.
+`Prompt`/`Entry` mix in `core.mixins.TimestampedModel` for `created_at`/`updated_at`; `PromptSend` is a plain `models.Model` with its own `sent_at`.
 
 ### Daily email send
 
-`core/utils.py:mail_newsletter(user)` looks up the `Prompt` whose `mail_day` matches the user's local calendar date and emails it (multipart text + `core/daily_email.html`). The `send_daily_mail` management command iterates confirmed, subscribed users and sends to anyone whose local time is hour 5 — it is intended to be invoked hourly by an external scheduler, not a worker process.
+`core/utils.py:send_prompt_to_user(user, force=False)` is the single entry point: it resolves today's `Prompt` for the user's local date, sends it via `mail_newsletter` (multipart text + `core/daily_email.html`), and records a `PromptSend`. It skips users who already have a `PromptSend` for that prompt unless `force=True`, and returns `None` whenever nothing was sent (no valid tz, no prompt, or already sent).
+
+The `send_daily_mail` management command iterates confirmed, subscribed users and calls `send_prompt_to_user` for anyone whose local hour is ≥ 8. It runs **hourly** so each user is caught when their local clock passes 8am; per-user exceptions are caught and logged so one failure doesn't abort the run. The `PromptSend` dedup means re-running it the same day is a no-op.
+
+In production the cron runs **in-process**: `supercronic` (installed in the `Dockerfile`, pinned) executes the repo-root `crontab` alongside gunicorn, started by `start.sh`. This is why `fly.toml` sets `auto_stop_machines = "off"` — background jobs aren't HTTP traffic, so an autostopped machine would silently skip deliveries.
+
+The User admin (`authentication/admin.py`) adds a custom `send-prompt/<pk>/` URL and "Send today's prompt" button that calls `send_prompt_to_user(user, force=True)`.
 
 ### Inbound email (reply-to-prompt)
 
