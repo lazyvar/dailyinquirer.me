@@ -215,14 +215,16 @@ class IncomingMessageTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Entry.objects.count(), 0)
 
-    def test_duplicate_entry_not_created_twice(self):
+    def test_second_reply_creates_another_entry(self):
+        """A prompt accepts multiple replies from the same user."""
         Entry.objects.create(
             content='first', author=self.user,
             prompt=self.prompt, pub_date=timezone.now())
         response = self.post(
             {'sender': 'writer@example.com', 'stripped-text': 'second'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Entry.objects.count(), 1)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Entry.objects.count(), 2)
+        self.assertEqual(Entry.objects.filter(content='second').count(), 1)
 
 
 class TimestampTests(TestCase):

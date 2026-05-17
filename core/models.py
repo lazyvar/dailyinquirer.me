@@ -21,6 +21,12 @@ class Entry(TimestampedModel):
     author = models.ForeignKey(User, on_delete=models.PROTECT)
     prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT)
 
+    class Meta:
+        # Serves the home page's filter(author=...).order_by('-pub_date').
+        indexes = [
+            models.Index(fields=['author', '-pub_date']),
+        ]
+
     def __str__(self):
         date = date_format(self.pub_date,
                            format='SHORT_DATE_FORMAT',
