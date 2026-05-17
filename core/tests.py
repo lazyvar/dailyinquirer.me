@@ -12,7 +12,7 @@ from authentication.models import User
 from authentication.tokens import account_activation_token
 
 from core.models import Entry, Prompt, PromptSend
-from core.utils import mail_newsletter
+from core.utils import mail_newsletter, send_prompt_to_user
 
 
 class EmailConfirmationTests(TestCase):
@@ -276,3 +276,52 @@ class PromptSendModelTests(TestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 PromptSend.objects.create(user=user, prompt=prompt)
+
+
+class SendPromptToUserTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='p@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_sends_and_records_when_not_sent_before(self):
+        result = send_prompt_to_user(self.user)
+
+        self.assertEqual(result, self.prompt)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(
+                user=self.user, prompt=self.prompt).count(), 1)
+
+    def test_skips_when_already_sent(self):
+        PromptSend.objects.create(user=self.user, prompt=self.prompt)
+
+        result = send_prompt_to_user(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.user).count(), 1)
+
+    def test_force_resends_even_when_already_sent(self):
+        PromptSend.objects.create(user=self.user, prompt=self.prompt)
+
+        result = send_prompt_to_user(self.user, force=True)
+
+        self.assertEqual(result, self.prompt)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.user).count(), 1)
+
+    def test_returns_none_when_no_prompt_for_today(self):
+        self.prompt.delete()
+
+        result = send_prompt_to_user(self.user)
+
+        self.assertIsNone(result)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
