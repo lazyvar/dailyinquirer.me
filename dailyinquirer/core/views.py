@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from authentication.models import User
 from django.contrib.auth.decorators import login_required
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from authentication.tokens import account_activation_token
 from django.core.mail import EmailMessage
@@ -24,7 +24,7 @@ import pytz
 
 
 def index(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if request.user.confirmed_email:
             entries = Entry.objects.filter(author=request.user).\
                 order_by("-pub_date")
@@ -61,7 +61,7 @@ def settings(request):
 
 
 def register(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         return redirect('index')
     else:
         if request.method == 'POST':
@@ -129,7 +129,7 @@ def send_activation_email(request, user):
 
 def activate(request, uidb64, token):
     try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
