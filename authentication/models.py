@@ -7,6 +7,8 @@ from datetime import datetime
 
 import pytz
 
+from core.mixins import TimestampedModel
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None):
@@ -37,7 +39,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, TimestampedModel):
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,

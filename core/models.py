@@ -2,9 +2,10 @@ from django.db import models
 from django.utils.formats import date_format
 
 from authentication.models import User
+from core.mixins import TimestampedModel
 
 
-class Prompt(models.Model):
+class Prompt(TimestampedModel):
     question = models.CharField(max_length=255)
     mail_day = models.DateTimeField()
     override_html = models.TextField(default=None, blank=True, null=True)
@@ -14,7 +15,7 @@ class Prompt(models.Model):
         return self.question
 
 
-class Entry(models.Model):
+class Entry(TimestampedModel):
     content = models.TextField()
     pub_date = models.DateTimeField('date published')
     author = models.ForeignKey(User, on_delete=models.PROTECT)
