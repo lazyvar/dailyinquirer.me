@@ -3,7 +3,8 @@ from datetime import datetime
 from unittest.mock import patch
 
 from django.core.management import call_command
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.recorder import MigrationRecorder
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.core import mail
@@ -681,3 +682,40 @@ class EntryContentUnwrapTests(TestCase):
         self.assertContains(response, '<p>The night was bright. The town slept.</p>')
         self.assertContains(response, '<p>Then dawn came.</p>')
         self.assertNotContains(response, 'bright.<br>')
+
+
+class RepairMigrationHistoryTests(TestCase):
+    """`repair_migration_history` un-records an orphaned 0007 tip.
+
+    Production once had core.0007_merge / 0007_seed recorded as applied
+    while their dependency core.0005_promptsend never was, so `migrate`'s
+    consistency check crashed the container on boot. The command removes
+    the orphaned ledger rows so `migrate` can replay the chain forward.
+    """
+
+    PROMPTSEND = ("core", "0005_promptsend")
+    MERGE = ("core", "0007_merge_20260517_2159")
+    SEED = ("core", "0007_seed_thirty_days_of_prompts")
+
+    def test_un_records_0007_tip_applied_without_promptsend(self):
+        recorder = MigrationRecorder(connection)
+        # Simulate the broken production ledger: the 0007 tip is recorded
+        # as applied, but its dependency 0005_promptsend never was.
+        recorder.record_unapplied(*self.PROMPTSEND)
+        applied = recorder.applied_migrations()
+        self.assertIn(self.MERGE, applied)
+        self.assertIn(self.SEED, applied)
+
+        call_command("repair_migration_history")
+
+        applied = recorder.applied_migrations()
+        self.assertNotIn(self.MERGE, applied)
+        self.assertNotIn(self.SEED, applied)
+
+    def test_no_op_when_history_is_consistent(self):
+        recorder = MigrationRecorder(connection)
+        before = set(recorder.applied_migrations())
+
+        call_command("repair_migration_history")
+
+        self.assertEqual(set(recorder.applied_migrations()), before)

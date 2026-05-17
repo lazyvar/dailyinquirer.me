@@ -1,46 +1,57 @@
-"""One-time repair for an inconsistent production migration history.
+"""Repair an inconsistent production migration history before ``migrate``.
 
 Background
 ----------
-PR #24 added ``core.0007_seed_thirty_days_of_prompts`` depending on
-``core.0006_entry_...``; it deployed and was recorded as applied on
-production. PR #25 then resolved a migration-graph conflict by creating
-the no-op merge migration ``core.0007_merge_20260517_2159`` and
-re-pointing the (already-applied) seed migration's dependency onto it.
+PR #24 added ``core.0007_seed_thirty_days_of_prompts``; PR #23/#25 then
+introduced ``core.0005_promptsend`` and the no-op merge migration
+``core.0007_merge_20260517_2159``, and re-pointed the seed migration's
+dependency onto the merge.
 
-The result: production's ``django_migrations`` table has the seed
-migration recorded as applied while its new dependency, the merge
-migration, is missing. ``manage.py migrate`` runs
-``check_consistent_history`` before doing anything and aborts with
-``InconsistentMigrationHistory`` -- which crashes the container on boot.
+On production the 0007 tip -- the merge and/or seed migrations -- ended
+up recorded as applied in ``django_migrations`` while the merge's
+dependency ``core.0005_promptsend`` never was. ``manage.py migrate``
+runs ``check_consistent_history`` before doing anything and aborts with
+``InconsistentMigrationHistory`` -- crashing the container on boot.
+``migrate --fake`` cannot help: it runs the same check first.
 
-``migrate --fake`` cannot fix this: it runs the same consistency check
-first. The fix has to write the missing ledger row directly, which is
-what this command does. It is invoked from ``start.sh`` before
-``migrate`` and is safe to keep -- it is a precise, idempotent no-op
-once the history is consistent (and on any fresh database).
+This command removes the orphaned 0007 ledger rows so ``migrate`` can
+replay ``0005_promptsend -> 0007_merge -> 0007_seed`` forward, creating
+the missing ``core_promptsend`` table. The seed migration only inserts
+prompts for dates that have none, so replaying it is safe.
+
+It runs from ``start.sh`` before ``migrate`` and is a precise,
+idempotent no-op once history is consistent (and on any fresh database).
 """
 
 from django.core.management.base import BaseCommand
 from django.db import connection
 from django.db.migrations.recorder import MigrationRecorder
 
-SEED = ("core", "0007_seed_thirty_days_of_prompts")
-MERGE = ("core", "0007_merge_20260517_2159")
+PROMPTSEND = ("core", "0005_promptsend")
+# The 0007 tip that depends (transitively) on 0005_promptsend. Order does
+# not matter -- un-recording is a row delete -- but the merge must go too:
+# leaving the seed without the merge would just shift the inconsistency.
+TIP = [
+    ("core", "0007_merge_20260517_2159"),
+    ("core", "0007_seed_thirty_days_of_prompts"),
+]
 
 
 class Command(BaseCommand):
-    help = "Record the 0007 merge migration if its dependent was applied without it."
+    help = "Un-record the 0007 tip if it was applied without 0005_promptsend."
 
     def handle(self, *args, **options):
         recorder = MigrationRecorder(connection)
         applied = recorder.applied_migrations()
 
-        if SEED in applied and MERGE not in applied:
-            recorder.record_applied(*MERGE)
-            self.stdout.write(
-                f"repair: recorded {MERGE[0]}.{MERGE[1]} as applied "
-                f"(dependent {SEED[1]} was applied without it)"
-            )
+        orphaned = [m for m in TIP if m in applied]
+        if PROMPTSEND not in applied and orphaned:
+            for migration in orphaned:
+                recorder.record_unapplied(*migration)
+                self.stdout.write(
+                    f"repair: un-recorded {migration[0]}.{migration[1]} "
+                    f"(applied without dependency {PROMPTSEND[1]})"
+                )
         else:
-            self.stdout.write("repair: migration history consistent, nothing to do")
+            self.stdout.write(
+                "repair: migration history consistent, nothing to do")
