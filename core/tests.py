@@ -314,3 +314,29 @@ class MailNewsletterTests(TestCase):
 
         self.assertIsNone(result)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class SettingsPageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_settings_renders_editorial_layout(self):
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="settings"')
+        self.assertContains(response, 'ed-masthead')
+        self.assertContains(response, 'ed-card')
+
+    def test_settings_loads_account_css(self):
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'account.css')
+
+    def test_settings_update_shows_success_alert(self):
+        response = self.client.post(reverse('settings'), {
+            'subscribed': 'on', 'timezone': 'America/New_York'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ed-alert--ok')
