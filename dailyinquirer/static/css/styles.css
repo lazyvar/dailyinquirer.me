@@ -38,21 +38,21 @@ body {
 }*/
 
 .btn-primary {
-    background-color: firebrick;
-    border-color: firebrick;
+    background-color: #009302;
+    border-color: #009302;
 }
 
 .btn-primary:hover {
-    background-color: #801919;
-    border-color: #801919;
+    background-color: #006b02;
+    border-color: #006b02;
 }
 
 a {
-    color: firebrick;
+    color: #009302;
 }
 
 a:hover {
-    color: #801919
+    color: #006b02
 }
 
 p {
@@ -70,7 +70,7 @@ p {
 }
 
 .typewriter {
-	font-family: 'TypoSlab Irregular Demo', sans-serif;
+	font-family: 'Special Elite', sans-serif;
 }
 
 button:hover, .btn:hover {
@@ -78,11 +78,11 @@ button:hover, .btn:hover {
 }
 
 .dotted {
-    border-bottom: 1px solid firebrick;
+    border-bottom: 1px solid #009302;
 }
 
 .dotted:hover {
-    border-bottom: 1px solid #801919;
+    border-bottom: 1px solid #006b02;
 }
 
 .bottom-border {
@@ -129,7 +129,7 @@ button:hover, .btn:hover {
 }
 
 .auth-wordmark {
-    font-family: 'TypoSlab Irregular Demo', sans-serif;
+    font-family: 'Special Elite', sans-serif;
     font-weight: 700;
     font-size: 1.5rem;
     margin-bottom: 24px;

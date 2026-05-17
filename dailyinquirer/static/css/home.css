@@ -4,6 +4,7 @@
   --ink-faint: #8a8a8a;
   --rule: #d8d4cc;
   --accent: #009302;
+  --accent-dark: #006b02;
   --accent-rgb: 0, 147, 2;
   --paper: #ffffff;
   --serif: 'Special Elite', Georgia, 'Times New Roman', serif;
@@ -69,7 +70,7 @@
 #home .ed-btn {
   display: inline-block;
   padding: 13px 28px;
-  background: var(--ink);
+  background: var(--accent);
   color: #fff;
   font-family: var(--body);
   font-size: 0.88rem;
@@ -83,7 +84,7 @@
 
 #home .ed-btn:hover,
 #home .ed-btn:focus {
-  background: var(--accent);
+  background: var(--accent-dark);
   color: #fff;
   text-decoration: none;
   transform: translateY(-1px);
@@ -184,7 +185,7 @@
 
 #home .ed-about__grid {
   display: grid;
-  grid-template-columns: 1fr 160px;
+  grid-template-columns: 1fr 200px;
   gap: 36px;
   align-items: start;
 }
@@ -214,7 +215,7 @@
 
 #home .ed-about__img {
   display: block;
-  max-width: 200px;
+  max-width: 220px;
   width: 100%;
   height: auto;
   border-radius: 8px;
@@ -322,7 +323,7 @@
   }
 
   #home .ed-about__img {
-    max-width: 160px;
+    max-width: 190px;
   }
 
   #home .ed-prompts {

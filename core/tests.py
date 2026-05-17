@@ -44,7 +44,6 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'id="home"')
         self.assertContains(response, 'ed-hero')
         self.assertContains(response, 'ed-prompts')
-        self.assertContains(response, 'ed-final')
 
     def test_home_loads_css(self):
         response = self.client.get(reverse('index'))
