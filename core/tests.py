@@ -1,4 +1,7 @@
-from django.test import TestCase
+import json
+
+from django.test import TestCase, override_settings
+from django.utils import timezone
 from django.core import mail
 from django.urls import reverse
 from django.utils.encoding import force_bytes
@@ -6,6 +9,8 @@ from django.utils.http import urlsafe_base64_encode
 
 from authentication.models import User
 from authentication.tokens import account_activation_token
+
+from core.models import Entry, Prompt
 
 
 class EmailConfirmationTests(TestCase):
@@ -117,3 +122,69 @@ class AuthPagesTests(TestCase):
         self.assertContains(response, 'auth-input')
         self.assertContains(response, 'auth-btn')
         self.assertNotContains(response, 'form-control')
+
+
+@override_settings(INBOUND_SHARED_SECRET='test-secret')
+class IncomingMessageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+        self.url = reverse('messages')
+
+    def post(self, payload, secret='test-secret'):
+        headers = {}
+        if secret is not None:
+            headers['HTTP_X_INBOUND_SECRET'] = secret
+        return self.client.post(
+            self.url, data=json.dumps(payload),
+            content_type='application/json', **headers)
+
+    def test_rejects_missing_secret(self):
+        response = self.post(
+            {'sender': 'writer@example.com', 'stripped-text': 'hi'},
+            secret=None)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Entry.objects.count(), 0)
+
+    def test_rejects_wrong_secret(self):
+        response = self.post(
+            {'sender': 'writer@example.com', 'stripped-text': 'hi'},
+            secret='wrong-secret')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Entry.objects.count(), 0)
+
+    def test_creates_entry_for_known_sender(self):
+        response = self.post(
+            {'sender': 'writer@example.com', 'stripped-text': 'My entry.'})
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Entry.objects.count(), 1)
+        entry = Entry.objects.get()
+        self.assertEqual(entry.content, 'My entry.')
+        self.assertEqual(entry.author, self.user)
+        self.assertEqual(entry.prompt, self.prompt)
+
+    def test_unknown_sender_creates_no_entry(self):
+        response = self.post(
+            {'sender': 'stranger@example.com', 'stripped-text': 'hi'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Entry.objects.count(), 0)
+
+    def test_missing_fields_returns_400(self):
+        response = self.post({'sender': 'writer@example.com'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Entry.objects.count(), 0)
+
+    def test_duplicate_entry_not_created_twice(self):
+        Entry.objects.create(
+            content='first', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.post(
+            {'sender': 'writer@example.com', 'stripped-text': 'second'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Entry.objects.count(), 1)
