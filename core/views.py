@@ -122,7 +122,7 @@ def send_activation_email(request, user):
     to_email = user.email
     email = EmailMessage(mail_subject,
                          message,
-                         "Beep Boop <beep-boop@dailyinquirer.me>",
+                         "The Daily Inquirer <the@dailyinquirer.me>",
                          [to_email])
     email.send()
 

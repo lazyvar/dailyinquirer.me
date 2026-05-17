@@ -116,7 +116,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-DEFAULT_FROM_EMAIL = 'Beep Boop <beep-boop@dailyinquirer.me>'
+DEFAULT_FROM_EMAIL = 'The Daily Inquirer <the@dailyinquirer.me>'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
