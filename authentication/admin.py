@@ -5,6 +5,11 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from authentication.models import User
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import path
+
+from core.utils import mail_newsletter
 
 
 class UserCreationForm(forms.ModelForm):
@@ -83,6 +88,32 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email',)
     ordering = ('email',)
     filter_horizontal = ()
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('send-prompt/<int:pk>/',
+                 self.admin_site.admin_view(self.send_prompt_view),
+                 name='authentication_user_send_prompt'),
+        ]
+        return custom + urls
+
+    def send_prompt_view(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        try:
+            prompt = mail_newsletter(user)
+        except Exception as exc:
+            messages.error(request, f"Failed to send: {exc}")
+        else:
+            if prompt is None:
+                messages.warning(
+                    request,
+                    f"No prompt for today for {user.email} "
+                    f"(or the user has no valid timezone) — nothing sent.")
+            else:
+                messages.success(
+                    request, f"Sent today's prompt to {user.email}.")
+        return redirect('admin:authentication_user_change', pk)
 
 
 # Now register the new UserAdmin...
