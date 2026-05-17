@@ -71,6 +71,40 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'href="/login/"')
 
 
+class LogoutTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='member@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+
+    def test_settings_page_logout_control_uses_post(self):
+        """The settings page must log out via POST, not a GET link.
+
+        Django's LogoutView only accepts POST; a bare <a href="/logout/">
+        issues a GET and the server responds 405 Method Not Allowed.
+        """
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '<a href="/logout/"')
+        self.assertContains(response, 'action="/logout/"')
+
+    def test_get_logout_is_rejected(self):
+        """A GET to /logout/ is the exact failure from the bug report."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('logout'))
+        self.assertEqual(response.status_code, 405)
+
+    def test_post_logout_logs_user_out_and_redirects_home(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('logout'))
+        self.assertRedirects(response, '/')
+        # The user is anonymous on the next request.
+        followup = self.client.get(reverse('settings'))
+        self.assertNotEqual(followup.status_code, 200)
+
+
 class AuthPagesTests(TestCase):
     def _assert_editorial_shell(self, response):
         self.assertEqual(response.status_code, 200)
