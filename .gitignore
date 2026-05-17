@@ -109,3 +109,6 @@ ENV/
 .superpowers/
 .venv/
 runserver.log
+
+# AWS SAM build artifacts
+infra/inbound-email/.aws-sam/

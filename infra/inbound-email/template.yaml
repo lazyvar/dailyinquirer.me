@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Inbound email (reply-to-prompt) processing for dailyinquirer.me
+
+Parameters:
+  SharedSecret:
+    Type: String
+    NoEcho: true
+    Description: Secret sent in X-Inbound-Secret; must match Fly INBOUND_SHARED_SECRET.
+  HostedZoneId:
+    Type: String
+    Default: Z0253142WNQ4MF525XQJ
+    Description: Route 53 hosted zone for dailyinquirer.me.
+  RuleSetName:
+    Type: String
+    Default: dailyinquirer-inbound
+    Description: Name of the SES receipt rule set.
+
+Resources:
+
+  InboundBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dailyinquirer-inbound-email
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-inbound
+            Status: Enabled
+            Prefix: inbound/
+            ExpirationInDays: 30
+
+  InboundBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref InboundBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSESPut
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub '${InboundBucket.Arn}/inbound/*'
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+
+  InboundFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: dailyinquirer-inbound-email
+      Runtime: python3.12
+      Handler: app.handler
+      CodeUri: ./lambda
+      Architectures: [arm64]
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          INBOUND_BUCKET: !Ref InboundBucket
+          MESSAGES_ENDPOINT: https://dailyinquirer.me/messages/
+          SHARED_SECRET: !Ref SharedSecret
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub '${InboundBucket.Arn}/inbound/*'
+
+  InboundFunctionSesPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref InboundFunction
+      Action: lambda:InvokeFunction
+      Principal: ses.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  InboundRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: !Ref RuleSetName
+
+  InboundRule:
+    Type: AWS::SES::ReceiptRule
+    DependsOn:
+      - InboundBucketPolicy
+      - InboundFunctionSesPermission
+    Properties:
+      RuleSetName: !Ref InboundRuleSet
+      Rule:
+        Name: deliver-the
+        Enabled: true
+        ScanEnabled: true
+        TlsPolicy: Optional
+        Recipients:
+          - the@dailyinquirer.me
+        Actions:
+          - S3Action:
+              BucketName: !Ref InboundBucket
+              ObjectKeyPrefix: inbound/
+          - LambdaAction:
+              FunctionArn: !GetAtt InboundFunction.Arn
+              InvocationType: Event
+
+  InboundMxRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: dailyinquirer.me.
+      Type: MX
+      TTL: '300'
+      ResourceRecords:
+        - 10 inbound-smtp.us-east-1.amazonaws.com.
+
+Outputs:
+  FunctionName:
+    Value: !Ref InboundFunction
+  BucketName:
+    Value: !Ref InboundBucket
+  RuleSetName:
+    Value: !Ref InboundRuleSet
