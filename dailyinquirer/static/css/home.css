@@ -1,0 +1,46 @@
+#home {
+  --ink: #1a1a1a;
+  --ink-soft: #555;
+  --ink-faint: #8a8a8a;
+  --rule: #d8d4cc;
+  --accent: #b22222;
+  --accent-dark: #801919;
+  --paper: #ffffff;
+  --serif: 'TypoSlab Irregular Demo', Georgia, 'Times New Roman', serif;
+  --body: 'Open Sans', system-ui, sans-serif;
+}
+
+/* Theme switching: only the active layout is shown. */
+#home .broadsheet-layout,
+#home .editorial-layout { display: none; }
+#home.theme-broadsheet .broadsheet-layout { display: block; }
+#home.theme-editorial .editorial-layout { display: block; }
+
+/* Footer theme switch — understated, sits above Terms/Privacy. */
+.theme-switch {
+  margin: 28px 0 4px;
+  text-align: center;
+  font-family: var(--body);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.theme-switch__label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-right: 8px;
+}
+.theme-switch__btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font: inherit;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+.theme-switch__btn:hover { color: var(--accent); }
+.theme-switch__btn.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.theme-switch__sep { margin: 0 4px; color: var(--rule); }
