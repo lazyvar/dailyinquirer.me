@@ -20,6 +20,7 @@ Postgres dump.
 | App name | `dailyinquirer` (`dailyinquirer.fly.dev`) |
 | Data | Migrate existing Heroku data from a Postgres custom-format dump |
 | Static files | Served by whitenoise from the image (built at image-build time) |
+| Email | AWS SES via django-anymail (`us-east-1`), replacing Mailgun |
 
 ## Source data
 
@@ -78,13 +79,39 @@ Required for running behind Fly's TLS-terminating proxy:
 `DATABASES` already updates from `dj_database_url.config()` (reads
 `DATABASE_URL`); no further change needed.
 
+Email is migrated from Mailgun to AWS SES (still via `django-anymail`):
+- `EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"`.
+- `ANYMAIL` carries only `AMAZON_SES_CLIENT_PARAMS = {"region_name": "us-east-1"}`.
+- SES credentials come from `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env
+  vars, which boto3 reads automatically.
+- `requirements.txt`: `django-anymail[mailgun]` → `django-anymail[amazon-ses]`
+  (the `amazon-ses` extra pulls in `boto3`).
+
 ## Fly secrets
 
 Set via `fly secrets set`:
 
 - `SECRET_KEY` — a fresh random key (the hardcoded base key is now public).
 - `DATABASE_URL` — `sqlite:////data/db.sqlite3` (four slashes = absolute path).
-- `MAILGUN_ACCESS_KEY` — the Mailgun API key.
+- `AWS_ACCESS_KEY_ID` — access key for the SES-sending IAM user.
+- `AWS_SECRET_ACCESS_KEY` — secret for that IAM user.
+
+## Email — AWS SES setup
+
+SES is not yet configured. Before email works, the user must, in the AWS
+Console (region `us-east-1`):
+
+1. Verify `dailyinquirer.me` as an SES domain identity with Easy DKIM, adding
+   the 3 CNAME records AWS provides to the registrar's DNS.
+2. Request SES production access (the account starts in the sandbox, which
+   only allows sending to verified addresses — unusable for a newsletter).
+   AWS approval typically takes ~24h.
+3. Create an IAM user with an inline policy allowing `ses:SendEmail` and
+   `ses:SendRawEmail`, and generate an access key pair.
+
+These keys become the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` Fly
+secrets. The deploy can proceed before SES production access is granted; only
+outbound email is gated on it.
 
 ## Data migration (one-time)
 
@@ -120,7 +147,9 @@ After the app is verified working on `dailyinquirer.fly.dev`:
 - Removing Heroku artifacts (`Procfile`, `runtime.txt`) — harmless, left in place.
 - Removing now-unused `psycopg[binary]` from `requirements.txt` — optional cleanup, deferred.
 - Multi-machine / horizontal scaling — SQLite is single-machine by design.
-- Decommissioning the Heroku app — left to the user after Fly is confirmed good.
+- The Heroku app is already dead; no decommissioning needed.
+- `dev.py` still references Mailgun — it is a local-only dev settings module,
+  not used by the deployment; updating it is optional follow-up.
 
 ## Success criteria
 
