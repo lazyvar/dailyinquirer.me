@@ -69,3 +69,45 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('index'))
         self.assertContains(response, 'href="/register/"')
         self.assertContains(response, 'href="/login/"')
+
+
+class AuthPagesTests(TestCase):
+    def _assert_editorial_shell(self, response):
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'auth.css')
+        self.assertNotContains(response, 'bootstrap.css')
+
+    def test_login_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('login')))
+
+    def test_register_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('register')))
+
+    def test_password_reset_form_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('password_reset')))
+
+    def test_password_reset_done_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('password_reset_done')))
+
+    def test_password_reset_confirm_page(self):
+        url = reverse('password_reset_confirm',
+                      kwargs={'uidb64': 'MQ', 'token': 'aaa-bbb'})
+        self._assert_editorial_shell(self.client.get(url))
+
+    def test_password_reset_complete_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('password_reset_complete')))
+
+    def test_resend_confirmation_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('resend_confirmation')))
+
+    def test_unconfirmed_email_page(self):
+        self._assert_editorial_shell(self.client.get(reverse('unconfirmed_email')))
+
+    def test_activation_email_sent_page(self):
+        response = self.client.post(reverse('register'), {
+            'email': 'authtest@example.com',
+            'timezone': 'US/Eastern',
+            'password1': 'mostdope1',
+            'password2': 'mostdope1',
+        })
+        self._assert_editorial_shell(response)
