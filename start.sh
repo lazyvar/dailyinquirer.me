@@ -10,6 +10,10 @@ else
     PYTHON=python
 fi
 
+# Repair an inconsistent migration ledger before migrating -- see the
+# command's docstring. No-op on consistent and on fresh databases.
+$PYTHON manage.py repair_migration_history
+
 $PYTHON manage.py migrate --noinput
 
 # Pass "dev" to run the Django development server (uses settings.local).

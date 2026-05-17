@@ -1,5 +1,6 @@
 body {
     font-family: 'Elms Sans', system-ui, sans-serif;
+    background-color: var(--page);
 }
 
 /* xs */

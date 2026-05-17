@@ -4,12 +4,13 @@
   --ink-soft: #555;
   --ink-faint: #8a8a8a;
   --rule: #d8d4cc;
+  --page: #fbfaf5;
   --accent: #009302;
   --accent-dark: #006b02;
   --accent-rgb: 0, 147, 2;
   --danger: #b22222;
   --danger-rgb: 178, 34, 34;
-  --paper: #ffffff;
+  --paper: #ffffff;        /* card / surface white */
   --display: 'Special Elite', Georgia, 'Times New Roman', serif;
   --body: 'Elms Sans', system-ui, sans-serif;
 }
