@@ -1,26 +1,99 @@
-{% extends "core/base.html" %} {% block content %}
-<div class="row justify-content-center mb-0">
-    <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
-</div>
-<div class="row bottom-border justify-content-center mt-0" style="padding-bottom: 6px;">
-    <p class="mb-0"><a href="/settings/">{{ user.email }}</a></p>
-</div>
-{% if entries|length > 0 %} {% for entry in entries %}
-<div class="row justify-content-center main">
-    <div class="col">
-        <h3 class="typewriter">{{ entry.prompt.question }}</h3>
-        <p>{{ entry.pub_date|date:"M d, Y" }}<em> {{ entry.prompt.category }}</em></p>
-        <p> {{ entry.content|linebreaks }} </p>
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="dashboard">
+  {% include "core/_masthead.html" with tab="Your writing" %}
+
+  <form class="ed-filters" method="get" action="/">
+    <div class="ed-search-row">
+      <input class="ed-search" type="text" name="q" value="{{ q }}"
+             aria-label="Search your entries"
+             placeholder="Search your entries and prompts&hellip;">
+      <button class="ed-btn" type="submit">Search</button>
     </div>
-</div>
-{% endfor %} {% else %}
-<div class="row justify-content-center">
-    <div class="col text-center">
-        <h3>No entries yet!</h3>
-        <p>When you reply to an email, your responses will appear here.</p>
+    <details class="ed-filter-disclosure"{% if filters_active %} open{% endif %}>
+      <summary class="ed-filter-toggle">Filters</summary>
+      <div class="ed-filter-panel">
+        <div class="ed-field">
+          <label class="ed-field__label" for="id_from">From</label>
+          <input class="ed-input" type="date" name="from" id="id_from" value="{{ date_from }}">
+        </div>
+        <div class="ed-field">
+          <label class="ed-field__label" for="id_to">To</label>
+          <input class="ed-input" type="date" name="to" id="id_to" value="{{ date_to }}">
+        </div>
+        <div class="ed-field">
+          <label class="ed-field__label" for="id_category">Category</label>
+          <select class="ed-input" name="category" id="id_category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}"{% if cat == category %} selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="ed-field">
+          <label class="ed-field__label" for="id_sort">Sort</label>
+          <select class="ed-input" name="sort" id="id_sort">
+            <option value="newest"{% if sort != 'oldest' %} selected{% endif %}>Newest first</option>
+            <option value="oldest"{% if sort == 'oldest' %} selected{% endif %}>Oldest first</option>
+          </select>
+        </div>
+        <button class="ed-btn" type="submit">Apply</button>
+        <a class="ed-filter-clear" href="/">Clear</a>
+      </div>
+    </details>
+  </form>
+
+  {% if filters_active %}
+  <p class="ed-count">Showing <b>{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}</b> of <b>{{ total_count }}</b> entries</p>
+  {% endif %}
+
+  {% if entries %}
+    {% for entry in entries %}
+    <article class="ed-card ed-entry">
+      {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
+      <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
+      <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
+      <div class="ed-entry__body">{{ entry.content|linebreaks }}</div>
+    </article>
+    {% endfor %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="ed-pagination">
+      {% if page_obj.has_previous %}
+      <a class="ed-page" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">&lsaquo; Prev</a>
+      {% else %}
+      <span class="ed-page is-disabled">&lsaquo; Prev</span>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+        <span class="ed-page is-current">{{ num }}</span>
+        {% else %}
+        <a class="ed-page" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a class="ed-page" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Next &rsaquo;</a>
+      {% else %}
+      <span class="ed-page is-disabled">Next &rsaquo;</span>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+  {% elif filters_active %}
+    <div class="ed-empty">
+      <h2>No entries match your search.</h2>
+      <p><a href="/">Clear search and filters</a></p>
     </div>
-</div>
-{% endif %}
-<div class="row bottom-border">
+  {% else %}
+    <div class="ed-empty">
+      <h2>No entries yet!</h2>
+      <p>When you reply to an email, your responses will appear here.</p>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
