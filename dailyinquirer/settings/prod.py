@@ -23,6 +23,9 @@ SECURE_SSL_REDIRECT = True
 # header set. Without it, SECURE_SSL_REDIRECT causes an infinite redirect loop.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# www.dailyinquirer.me is redirected to the naked apex domain.
+MIDDLEWARE.insert(1, 'dailyinquirer.middleware.RedirectWwwToNakedMiddleware')
+
 # db
 db_from_env = dj_database_url.config()
 
