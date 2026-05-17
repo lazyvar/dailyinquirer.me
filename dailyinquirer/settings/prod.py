@@ -28,15 +28,15 @@ db_from_env = dj_database_url.config()
 
 DATABASES['default'].update(db_from_env)
 
-# mailgun email
-
-MAILGUN_ACCESS_KEY = os.environ.get('MAILGUN_ACCESS_KEY', None)
-
+# email (AWS SES via django-anymail)
+# Credentials come from the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars,
+# which boto3 reads automatically.
 INSTALLED_APPS.append("anymail")
 
 ANYMAIL = {
-    "MAILGUN_API_KEY": MAILGUN_ACCESS_KEY,
-    "MAILGUN_SENDER_DOMAIN": 'dailyinquirer.me',
+    "AMAZON_SES_CLIENT_PARAMS": {
+        "region_name": "us-east-1",
+    },
 }
 
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
