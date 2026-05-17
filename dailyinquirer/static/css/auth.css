@@ -12,8 +12,9 @@
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  /* Soft newsprint tint — warm off-white so the white card reads as raised */
-  background-color: #f5f3ef;
+  /* Plain white — matches the home page; the card reads as raised via its
+     border, green bottom edge, and shadow. */
+  background-color: var(--paper);
   color: var(--ink);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
@@ -37,11 +38,12 @@
 
 .auth-page .auth-wordmark {
   font-family: var(--serif);
-  font-size: 1.05rem;
+  font-size: 2rem;
   font-weight: 400;
-  letter-spacing: 0.03em;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
   color: var(--ink);
-  margin-bottom: 28px;
+  margin-bottom: 30px;
   text-align: center;
 }
 
@@ -59,12 +61,10 @@
 .auth-page .auth-card {
   background: var(--paper);
   border: 1px solid var(--rule);
+  /* Green bottom edge — matches the home page masthead card */
+  border-bottom: 3px solid var(--accent);
   border-radius: 10px;
-  /* Layered shadow: ambient depth + crisp bottom edge */
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.07),
-    0 4px 16px rgba(0, 0, 0, 0.06),
-    0 1px 0 0 rgba(0, 0, 0, 0.04) inset;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   padding: 36px 32px 28px;
   width: 100%;
   max-width: 400px;
@@ -74,13 +74,13 @@
 /* --- Heading & descriptive text ---------------------------- */
 
 .auth-page .auth-title {
-  font-family: var(--serif);
-  font-size: 1.6rem;
-  font-weight: 400; /* Special Elite has only one weight */
-  line-height: 1.15;
+  font-family: var(--body);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--ink);
-  margin: 0 0 10px;
-  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
 }
 
 .auth-page .auth-subtitle {
@@ -175,8 +175,8 @@
 /* --- Primary button ---------------------------------------- */
 /*
    Must render identically on <button>, <input type="submit">, and <a>.
-   Dark ink background by default; green on hover — follows the editorial
-   home page pattern where green signals action/hover, not default state.
+   Green by default, darker green on hover — matches the editorial home
+   page CTA (.ed-btn).
 */
 
 .auth-page .auth-btn {
@@ -184,7 +184,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 13px 24px;
-  background: var(--ink);
+  background: var(--accent);
   color: #fff;
   font-family: var(--body);
   font-size: 0.88rem;
@@ -206,7 +206,7 @@
 
 .auth-page .auth-btn:hover,
 .auth-page .auth-btn:focus {
-  background: var(--accent);
+  background: var(--accent-dark);
   color: #fff;
   text-decoration: none;
   transform: translateY(-1px);
@@ -344,7 +344,7 @@
   }
 
   .auth-page .auth-wordmark {
-    font-size: 0.95rem;
+    font-size: 1.6rem;
   }
 }
 
