@@ -6,8 +6,7 @@
 /* --- Hero ---------------------------------------------------- */
 
 #home .ed-hero {
-  padding: 26px 0 52px;
-  border-bottom: 1px solid var(--rule);
+  padding: 26px 0 0;
   margin-bottom: 48px;
 }
 
@@ -311,7 +310,7 @@
 /* Small screens: 2-column steps and prompts */
 @media (max-width: 576px) {
   #home .ed-hero {
-    padding: 40px 0 36px;
+    padding: 40px 0 0;
     margin-bottom: 36px;
   }
 
@@ -336,7 +335,7 @@
 /* Narrow: single column */
 @media (max-width: 400px) {
   #home .ed-hero {
-    padding: 28px 0 28px;
+    padding: 28px 0 0;
     margin-bottom: 28px;
   }
 
