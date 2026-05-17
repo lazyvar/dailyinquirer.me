@@ -1,16 +1,3 @@
-#home {
-  --ink: #1a1a1a;
-  --ink-soft: #555;
-  --ink-faint: #8a8a8a;
-  --rule: #d8d4cc;
-  --accent: #009302;
-  --accent-dark: #006b02;
-  --accent-rgb: 0, 147, 2;
-  --paper: #ffffff;
-  --serif: 'Special Elite', Georgia, 'Times New Roman', serif;
-  --body: 'Open Sans', system-ui, sans-serif;
-}
-
 /* ============================================================
    HOME PAGE
    All selectors scoped to #home so styles cannot leak to other pages.
