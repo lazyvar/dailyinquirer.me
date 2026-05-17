@@ -1,85 +1,27 @@
-{% extends "core/base.html" %} {% block content %}
-<div class="row bottom-border">
-</div>
-<div class="row justify-content-center">
-    <div class="col-12 text-center">
-        <h1 class="typewriter bold">The Daily Inquirer</h1>
-        <h3 class="regular">a writing prompt email service</h3>
-    </div>
-</div>
-<div class="row justify-content-center">
-    <div class="col-8 col-sm-6 col-md-4 col-lg-4">
-        <a href="/register/" class="btn btn-primary btn-block btn-sm">Get started</a>
-    </div>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-8 col-sm-6 col-md-4 col-lg-4">
-        <p>Already registered? <a class="dotted" href="login">Log in.</a></p>
-    </div>
-</div>
-<div class="row steps bottom-border">
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/inbox.png">
-        <p><strong>1.</strong> Receive email with writing prompt.</p>
-    </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/send.png">
-        <p><strong>2.</strong> Reply to email with your response.</p>
-    </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/blog.png">
-        <p><strong>3.</strong> Responses are saved to your personal page.</p>
-    </div>
-    <div class="col-sm-3 text-center">
-        <img class="img-fluid" src="/static/img/cal.png">
-        <p><strong>4.</strong> Repeat every day and improve your writing!</p>
-    </div>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-sm-6 text-justify">
-        <h3>About</h3>
-        <p>This service was created out of a need for <a href="https://mack.cloud">one human</a> to improve his writing. The best way to improve something is to practice, practice, practice. Free writing has its benefits, but it is easier to write when prompted about something.</p>
-        <p>Use this service to practice your writing, start a personal journal, or find inspiration. If you choose to reply to the email, your response will be saved to this website. Your entries are private, only you can see them.</p>
-    </div>
-    <div class="col-8 col-sm-6 vcenter">
-        <img class="img-fluid mb-4" src="/static/img/typing_monkey.png">
-    </div>
-</div>
-<div class="row bottom-border">
-    <div class="col-6 col-sm-4">
-        <h3>Monday</h3>
-        <p><em style="display: inline;">Expository</em></p>
-        <p>Explain what pollution is.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Tuesday</h3>
-        <p><em style="display: inline;">Descriptive</em></p>
-        <p>Describe your first car.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Wednesday</h3>
-        <p><em style="display: inline;">Persuasive</em></p>
-        <p>Can anything be funny or are some things off limits?</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Thursday</h3>
-        <p><em style="display: inline;">Narrative</em></p>
-        <p>Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Friday</h3>
-        <p><em style="display: inline;">Free Write</em></p>
-        <p>Happy Friday! Write about whatever you want.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Saturday</h3>
-        <p><em style="display: inline;">Creative</em></p>
-        <p>Write a haiku about the mailman.</p>
-    </div>
-    <div class="col-6 col-sm-4">
-        <h3>Sunday</h3>
-        <p><em style="display: inline;">Reflective</em></p>
-        <p>Have you ever made a new year's resolution that you kept?</p>
-    </div>
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/home.css" rel="stylesheet">
+<script defer src="/static/js/home-theme.js"></script>
+{% endblock %}
+
+{% block content %}
+<div id="home" class="theme-broadsheet">
+
+  <div class="broadsheet-layout">
+    {# Task 4 fills this in #}
+  </div>
+
+  <div class="editorial-layout">
+    {# Task 6 fills this in #}
+  </div>
+
+  <div class="theme-switch">
+    <span class="theme-switch__label">View as</span>
+    <button type="button" class="theme-switch__btn" data-theme="broadsheet">Broadsheet</button>
+    <span class="theme-switch__sep">·</span>
+    <button type="button" class="theme-switch__btn" data-theme="editorial">Editorial</button>
+  </div>
+
 </div>
 {% endblock %}

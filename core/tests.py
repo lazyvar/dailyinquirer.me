@@ -35,3 +35,27 @@ class EmailConfirmationTests(TestCase):
         user.refresh_from_db()
         self.assertTrue(user.confirmed_email)
         self.assertRedirects(response, reverse('index'))
+
+
+class HomePageTests(TestCase):
+    def test_home_renders_both_theme_layouts(self):
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="home"')
+        self.assertContains(response, 'broadsheet-layout')
+        self.assertContains(response, 'editorial-layout')
+
+    def test_home_loads_theme_assets(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'home.css')
+        self.assertContains(response, 'home-theme.js')
+
+    def test_home_has_theme_toggle(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'data-theme="broadsheet"')
+        self.assertContains(response, 'data-theme="editorial"')
+
+    def test_other_pages_do_not_load_home_css(self):
+        response = self.client.get(reverse('terms'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'home.css')
