@@ -1,45 +1,39 @@
- {% extends "core/base.html" %} {% block content %}
-<div class="row justify-content-center bottom-border mb-3">
-    <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-sm-6">
-        {% if form.errors %} {% for field in form %} {% for error in field.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endif %}
-        <form method="post" action="" class="mb-3">
-            {% csrf_token %}
-            <div class="form-group">
-                <input type="email" class="form-control" id="id_email" placeholder="Email" name="email" required="">
-            </div>
-            <div class="form-group">
-                <input type="password" class="form-control" id="id_password1" placeholder="Password" name="password1" required="">
-            </div>
-            <div class="form-group">
-                <input type="password" class="form-control" id="id_password2" placeholder="Confirm Password" name="password2" required="">
-            </div>
-            <div class="form-group">
-                {% load tz %} 
-                {% with "US/Eastern" as local_tz %}
-                <select class="form-control" name="timezone">
-                    {% for tz in timezones %}
-                    <option value="{{ tz }}"
-                    {% if tz == local_tz %} selected{% endif %}>
-                    {{ tz }}
-                    </option>
-                    {% endfor %}
-                    {% endwith %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block btn-sm mb-2">Register</button>
-            <p>By signing up you agree to the <a href="/terms/" class="dotted">terms</a> and <a href="/privacy/" class="dotted">privacy policy</a>.</p>
-        </form>
+{% extends "registration/auth_base.html" %}
+{% block card %}
+<h1>Sign up</h1>
+<p class="auth-subtitle">Create your account to get the news every morning.</p>
+{% if form.errors %}{% for field in form %}{% for error in field.errors %}
+<div class="alert alert-danger"><strong>{{ error|escape }}</strong></div>
+{% endfor %}{% endfor %}{% for error in form.non_field_errors %}
+<div class="alert alert-danger"><strong>{{ error|escape }}</strong></div>
+{% endfor %}{% endif %}
+<form method="post" action="">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="id_email">Email</label>
+        <input type="email" class="form-control" id="id_email" placeholder="email@example.com" name="email" required="">
     </div>
-</div>
+    <div class="form-group">
+        <label for="id_password1">Password</label>
+        <input type="password" class="form-control" id="id_password1" placeholder="Password" name="password1" required="">
+    </div>
+    <div class="form-group">
+        <label for="id_password2">Confirm password</label>
+        <input type="password" class="form-control" id="id_password2" placeholder="Confirm password" name="password2" required="">
+    </div>
+    <div class="form-group">
+        <label for="id_timezone">Timezone</label>
+        {% load tz %}
+        {% with "US/Eastern" as local_tz %}
+        <select class="form-control" name="timezone" id="id_timezone">
+            {% for tz in timezones %}
+            <option value="{{ tz }}"{% if tz == local_tz %} selected{% endif %}>{{ tz }}</option>
+            {% endfor %}
+        </select>
+        {% endwith %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+    <p class="auth-subtitle mt-2" style="margin-bottom: 0;">By signing up you agree to the <a href="/terms/" class="dotted">terms</a> and <a href="/privacy/" class="dotted">privacy policy</a>.</p>
+</form>
+<p class="auth-alt">Already have an account? <a href="{% url 'login' %}" class="dotted">Log in</a></p>
 {% endblock %}
