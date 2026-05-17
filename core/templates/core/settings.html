@@ -51,7 +51,10 @@
             </div>
             <input type="submit" class="btn btn-light btn-block mb-2" value="Reset password" />
         </form>
-        <a href="/logout/" class="btn btn-light btn-block mb-2">Logout</a>
+        <form action="/logout/" method="post">
+            {% csrf_token %}
+            <input type="submit" class="btn btn-light btn-block mb-2" value="Logout" />
+        </form>
     </div>
 </div>
 
