@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load entry_extras %}
 
 {% block extra_head %}
 <link href="/static/css/account.css" rel="stylesheet">
@@ -58,7 +59,7 @@
       {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
       <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
       <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
-      <div class="ed-entry__body">{{ entry.content|linebreaks }}</div>
+      <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
     </article>
     {% endfor %}
 
