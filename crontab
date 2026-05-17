@@ -1,0 +1,3 @@
+# Send the daily writing prompt. Runs hourly; the command decides who is
+# due (local time at or past 8am, not yet sent today).
+0 * * * * cd /app && python manage.py send_daily_mail
