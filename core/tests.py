@@ -111,3 +111,9 @@ class AuthPagesTests(TestCase):
             'password2': 'mostdope1',
         })
         self._assert_editorial_shell(response)
+
+    def test_login_uses_editorial_form_markup(self):
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, 'auth-input')
+        self.assertContains(response, 'auth-btn')
+        self.assertNotContains(response, 'form-control')

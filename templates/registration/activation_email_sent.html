@@ -1,5 +1,5 @@
 {% extends "registration/auth_base.html" %}
 {% block card %}
-<h1>Confirmation email sent</h1>
-<p class="auth-subtitle" style="margin-bottom: 0;">A confirmation email has been sent to {{ email }}. If you did not get this email we can <a href="/resend_confirmation/" class="dotted">resend it</a>.</p>
+<h1 class="auth-title">Confirmation email sent</h1>
+<p class="auth-subtitle">A confirmation email has been sent to {{ email }}. If you didn't get this email we can <a href="/resend_confirmation/" class="auth-link">resend it</a>.</p>
 {% endblock %}
