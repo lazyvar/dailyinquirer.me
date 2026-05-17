@@ -118,6 +118,10 @@ USE_TZ = True
 
 DEFAULT_FROM_EMAIL = 'Beep Boop <beep-boop@dailyinquirer.me>'
 
+# Shared secret the inbound-email Lambda must present in the
+# X-Inbound-Secret header on POST /messages/. Unset locally.
+INBOUND_SHARED_SECRET = os.environ.get('INBOUND_SHARED_SECRET')
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 

@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
 from authentication.admin import UserCreationForm
 from django.contrib.sites.shortcuts import get_current_site
-from django.http import HttpResponse
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                          HttpResponseForbidden, HttpResponseNotAllowed)
+from django.conf import settings as django_settings
 from django.template.loader import render_to_string
 from authentication.models import User
 from django.contrib.auth.decorators import login_required
@@ -18,6 +20,7 @@ from core.forms import ResendConfirmationForm, SettingsForm
 from core.utils import mail_newsletter
 
 from datetime import datetime
+import hmac
 
 import json
 import pytz
@@ -149,61 +152,57 @@ def activate(request, uidb64, token):
 
 @csrf_exempt
 def on_incoming_message(request):
-    if request.method == 'POST':
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
 
-        try:
-            data = json.loads(request.body)
-        except:
-            data = request.POST
+    expected = django_settings.INBOUND_SHARED_SECRET or ''
+    provided = request.headers.get('X-Inbound-Secret', '')
+    if not expected or not hmac.compare_digest(provided, expected):
+        return HttpResponseForbidden('invalid secret')
 
-        try:
-            sender = data['sender']
-            stripped_text = data['stripped-text']
-        except:
-            sender = None
-            stripped_text = None
+    try:
+        data = json.loads(request.body)
+    except (ValueError, TypeError):
+        data = request.POST
 
-        if stripped_text is not None:
+    sender = data.get('sender')
+    stripped_text = data.get('stripped-text')
+    if not sender or not stripped_text:
+        return HttpResponseBadRequest('missing sender or stripped-text')
 
-            try:
-                user = User.objects.get(email=sender)
-            except User.DoesNotExist:
-                user = None
+    try:
+        user = User.objects.get(email=sender)
+    except User.DoesNotExist:
+        return HttpResponse('ignored: unknown sender', status=200)
 
+    local_time = user.local_time()
+    if local_time is None:
+        return HttpResponse('ignored: user has no valid timezone', status=200)
 
-            if user is not None:
-                user_tz = pytz.timezone(user.timezone)
-                local_time = datetime.now(user_tz)
+    todays_prompt = Prompt.objects.filter(
+        mail_day__day=local_time.day,
+        mail_day__month=local_time.month,
+        mail_day__year=local_time.year,
+    ).first()
+    if todays_prompt is None:
+        return HttpResponse('ignored: no prompt for today', status=200)
 
-                todays_day = local_time.day
-                todays_month = local_time.month
-                todays_year = local_time.year
+    already_exists = Entry.objects.filter(
+        pub_date__day=local_time.day,
+        pub_date__month=local_time.month,
+        pub_date__year=local_time.year,
+        author=user,
+    ).exists()
+    if already_exists:
+        return HttpResponse('ignored: entry already exists', status=200)
 
-                try:
-                    todays_prompt = Prompt.objects.get(mail_day__day=todays_day,
-                                                       mail_day__month=todays_month,
-                                                       mail_day__year=todays_year)
-                except Prompt.DoesNotExist:
-                    todays_prompt = None
-
-
-                if todays_prompt is not None:
-                    try:
-                        entry_exists = Entry.objects.get(pub_date__day=todays_day,
-                                                         pub_date__month=todays_month,
-                                                         pub_date__year=todays_year,
-                                                         author=user)
-                    except Entry.DoesNotExist:
-                        entry_exists = None
-
-                    if entry_exists is None:
-                        entry = Entry(content=stripped_text,
-                                      author=user,
-                                      prompt=todays_prompt,
-                                      pub_date=timezone.now())
-                        entry.save()
-
-    return HttpResponse('OK')
+    Entry.objects.create(
+        content=stripped_text,
+        author=user,
+        prompt=todays_prompt,
+        pub_date=timezone.now(),
+    )
+    return HttpResponse('created', status=201)
 
 
 def privacy(request):
