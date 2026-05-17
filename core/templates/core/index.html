@@ -9,7 +9,82 @@
 <div id="home" class="theme-broadsheet">
 
   <div class="broadsheet-layout">
-    {# Task 4 fills this in #}
+
+    <header class="bs-masthead">
+      <div class="bs-dateline">
+        <span>Vol. I</span>
+        <span>{% now "l, F j, Y" %}</span>
+        <span>Price: Free</span>
+      </div>
+      <h1 class="bs-title">The Daily Inquirer</h1>
+      <p class="bs-motto">A Writing Prompt, Delivered to Your Inbox Each Morning</p>
+    </header>
+
+    <section class="bs-lede">
+      <p class="bs-lede__text">
+        A fresh writing prompt arrives every day. Reply from your inbox,
+        and your words are saved to a private page that is yours alone.
+      </p>
+      <div class="bs-lede__cta">
+        <a class="bs-btn" href="/register/">Get started</a>
+        <p class="bs-signin">Already registered? <a href="/login/">Log in.</a></p>
+      </div>
+    </section>
+
+    <section class="bs-section">
+      <h2 class="bs-kicker">How It Works</h2>
+      <ol class="bs-steps">
+        <li class="bs-step">
+          <img src="/static/img/inbox.png" alt="">
+          <p><span class="bs-step__num">1.</span> Receive an email with a writing prompt.</p>
+        </li>
+        <li class="bs-step">
+          <img src="/static/img/send.png" alt="">
+          <p><span class="bs-step__num">2.</span> Reply to the email with your response.</p>
+        </li>
+        <li class="bs-step">
+          <img src="/static/img/blog.png" alt="">
+          <p><span class="bs-step__num">3.</span> Your response is saved to your personal page.</p>
+        </li>
+        <li class="bs-step">
+          <img src="/static/img/cal.png" alt="">
+          <p><span class="bs-step__num">4.</span> Repeat every day and improve your writing.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="bs-section bs-about">
+      <h2 class="bs-kicker">About the Inquirer</h2>
+      <div class="bs-about__body">
+        <p>This service was created out of a need for
+          <a href="https://mack.cloud">one human</a> to improve his writing.
+          The best way to improve something is to practice, practice, practice.
+          Free writing has its benefits, but it is easier to write when
+          prompted about something.</p>
+        <p>Use this service to practice your writing, start a personal journal,
+          or find inspiration. If you choose to reply to the email, your
+          response will be saved to this website. Your entries are private —
+          only you can see them.</p>
+      </div>
+      <figure class="bs-about__figure">
+        <img src="/static/img/typing_monkey.png" alt="An illustration of a monkey at a typewriter">
+        <figcaption>Practice makes prose.</figcaption>
+      </figure>
+    </section>
+
+    <section class="bs-section">
+      <h2 class="bs-kicker">This Week's Dispatches</h2>
+      <div class="bs-prompts">
+        <article class="bs-prompt"><h3>Monday</h3><p class="bs-genre">Expository</p><p>Explain what pollution is.</p></article>
+        <article class="bs-prompt"><h3>Tuesday</h3><p class="bs-genre">Descriptive</p><p>Describe your first car.</p></article>
+        <article class="bs-prompt"><h3>Wednesday</h3><p class="bs-genre">Persuasive</p><p>Can anything be funny, or are some things off limits?</p></article>
+        <article class="bs-prompt"><h3>Thursday</h3><p class="bs-genre">Narrative</p><p>Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p></article>
+        <article class="bs-prompt"><h3>Friday</h3><p class="bs-genre">Free Write</p><p>Happy Friday! Write about whatever you want.</p></article>
+        <article class="bs-prompt"><h3>Saturday</h3><p class="bs-genre">Creative</p><p>Write a haiku about the mailman.</p></article>
+        <article class="bs-prompt"><h3>Sunday</h3><p class="bs-genre">Reflective</p><p>Have you ever made a New Year's resolution that you kept?</p></article>
+      </div>
+    </section>
+
   </div>
 
   <div class="editorial-layout">
