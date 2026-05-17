@@ -152,6 +152,14 @@
 .auth-page .auth-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+.auth-page .auth-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.auth-page .auth-input:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -203,12 +211,15 @@
   text-decoration: none;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.28);
-  outline: none;
 }
 
 .auth-page .auth-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.auth-page .auth-btn:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* --- Links ------------------------------------------------- */
@@ -232,7 +243,7 @@
   font-size: 0.78rem;
   color: var(--accent);
   text-decoration: none;
-  margin-top: -4px;   /* pull up close to the last field */
+  margin-top: -4px;   /* intentionally coupled to .auth-field's 16px bottom margin — pulls the link flush below the last field */
   margin-bottom: 4px; /* breathing room before the button */
 }
 
@@ -341,7 +352,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .auth-page .auth-btn,
-  .auth-page .auth-input {
+  .auth-page .auth-input,
+  .auth-page .auth-footer a,
+  .auth-page .auth-wordmark a,
+  .auth-page .auth-link {
     transition: none;
   }
 
