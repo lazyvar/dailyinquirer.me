@@ -38,31 +38,33 @@ class EmailConfirmationTests(TestCase):
 
 
 class HomePageTests(TestCase):
-    def test_home_renders_both_theme_layouts(self):
+    def test_home_renders_editorial_layout(self):
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="home"')
-        self.assertContains(response, 'broadsheet-layout')
-        self.assertContains(response, 'editorial-layout')
+        self.assertContains(response, 'ed-hero')
+        self.assertContains(response, 'ed-prompts')
+        self.assertContains(response, 'ed-final')
 
-    def test_home_loads_theme_assets(self):
+    def test_home_loads_css(self):
         response = self.client.get(reverse('index'))
         self.assertContains(response, 'home.css')
-        self.assertContains(response, 'home-theme.js')
 
-    def test_home_has_theme_toggle(self):
+    def test_home_has_no_theme_switcher(self):
         response = self.client.get(reverse('index'))
-        self.assertContains(response, 'data-theme="broadsheet"')
-        self.assertContains(response, 'data-theme="editorial"')
+        self.assertNotContains(response, 'data-theme')
+        self.assertNotContains(response, 'theme-switch')
+        self.assertNotContains(response, 'home-theme.js')
+        self.assertNotContains(response, 'broadsheet')
+
+    def test_home_highlights_todays_prompt(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'is-today', count=1)
 
     def test_other_pages_do_not_load_home_css(self):
         response = self.client.get(reverse('terms'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'home.css')
-
-    def test_home_default_theme_is_broadsheet(self):
-        response = self.client.get(reverse('index'))
-        self.assertContains(response, 'class="theme-broadsheet"')
 
     def test_home_cta_links_are_correct(self):
         response = self.client.get(reverse('index'))
