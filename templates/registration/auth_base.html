@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <title>{% block title %}The Daily Inquirer{% endblock %}</title>
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/fonts.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+
+<body class="auth-page">
+    <main class="auth-main">
+        <div class="auth-wordmark"><a href="/">The Daily Inquirer</a></div>
+        <div class="auth-card">
+            {% block card %}{% endblock %}
+        </div>
+    </main>
+    <footer class="auth-footer">
+        <p><a href="/terms/" class="footer-link">Terms</a><a href="/privacy/" class="footer-link">Privacy</a></p>
+    </footer>
+</body>
+
+</html>
