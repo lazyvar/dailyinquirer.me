@@ -107,3 +107,5 @@ ENV/
 
 # Brainstorming visual companion
 .superpowers/
+.venv/
+runserver.log
