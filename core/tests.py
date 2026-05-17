@@ -15,6 +15,7 @@ from authentication.models import User
 from authentication.tokens import account_activation_token
 
 from core.models import Entry, Prompt, PromptSend
+from core.templatetags.entry_extras import unwrap
 from core.utils import mail_newsletter, send_prompt_to_user
 
 
@@ -637,3 +638,46 @@ class DashboardTests(TestCase):
         self._entry(content='something')
         response = self.client.get(reverse('index'), {'q': 'zzzznomatch'})
         self.assertContains(response, 'No entries match')
+
+
+class EntryContentUnwrapTests(TestCase):
+    """The `unwrap` filter de-flows email hard-wrapping so entries fill the card."""
+
+    def test_joins_hard_wrapped_lines_within_a_paragraph(self):
+        wrapped = ("The night was bright, lit by a proud moon.\n"
+                   "The desert town of Winco hasn't\n"
+                   "felt a night like this.")
+        self.assertEqual(
+            unwrap(wrapped),
+            "The night was bright, lit by a proud moon. "
+            "The desert town of Winco hasn't felt a night like this.",
+        )
+
+    def test_keeps_blank_line_paragraph_breaks(self):
+        text = "First paragraph one\ntwo\n\nSecond paragraph"
+        self.assertEqual(unwrap(text), "First paragraph one two\n\nSecond paragraph")
+
+    def test_leaves_flowing_text_untouched(self):
+        flowing = "AWS is a modern marvel and ingenious business move from Amazon."
+        self.assertEqual(unwrap(flowing), flowing)
+
+    def test_normalizes_crlf_and_handles_empty(self):
+        self.assertEqual(unwrap("a\r\nb"), "a b")
+        self.assertEqual(unwrap(""), "")
+        self.assertIsNone(unwrap(None))
+
+    def test_dashboard_renders_hard_wrapped_entry_without_inner_br(self):
+        user = User.objects.create_user(email='wrap@example.com', password='mostdope1')
+        user.timezone = 'UTC'
+        user.confirmed_email = True
+        user.save()
+        prompt = Prompt.objects.create(question='Tell a story.', mail_day=timezone.now())
+        Entry.objects.create(
+            author=user, prompt=prompt, pub_date=timezone.now(),
+            content="The night was bright.\nThe town slept.\n\nThen dawn came.",
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, '<p>The night was bright. The town slept.</p>')
+        self.assertContains(response, '<p>Then dawn came.</p>')
+        self.assertNotContains(response, 'bright.<br>')

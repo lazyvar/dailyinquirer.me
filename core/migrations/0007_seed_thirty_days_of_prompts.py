@@ -84,7 +84,7 @@ def unseed_prompts(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0006_entry_core_entry_author__d99711_idx'),
+        ('core', '0007_merge_20260517_2159'),
     ]
 
     operations = [
