@@ -215,14 +215,68 @@ class IncomingMessageTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Entry.objects.count(), 0)
 
-    def test_duplicate_entry_not_created_twice(self):
+    def test_second_reply_creates_another_entry(self):
+        """A prompt accepts multiple replies from the same user."""
         Entry.objects.create(
             content='first', author=self.user,
             prompt=self.prompt, pub_date=timezone.now())
         response = self.post(
             {'sender': 'writer@example.com', 'stripped-text': 'second'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Entry.objects.count(), 1)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Entry.objects.count(), 2)
+        self.assertEqual(Entry.objects.filter(content='second').count(), 1)
+
+
+class TimestampTests(TestCase):
+    """Every model carries created_at/updated_at timestamps."""
+
+    def _make_user(self, email='ts@example.com'):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.timezone = 'UTC'
+        user.save()
+        return user
+
+    def test_user_gets_timestamps_on_create(self):
+        user = self._make_user()
+        self.assertIsNotNone(user.created_at)
+        self.assertIsNotNone(user.updated_at)
+
+    def test_prompt_gets_timestamps_on_create(self):
+        prompt = Prompt.objects.create(
+            question='What did you learn today?', mail_day=timezone.now())
+        self.assertIsNotNone(prompt.created_at)
+        self.assertIsNotNone(prompt.updated_at)
+
+    def test_entry_gets_timestamps_on_create(self):
+        user = self._make_user('writer@example.com')
+        prompt = Prompt.objects.create(
+            question='What did you learn today?', mail_day=timezone.now())
+        entry = Entry.objects.create(
+            content='An entry.', author=user, prompt=prompt,
+            pub_date=timezone.now())
+        self.assertIsNotNone(entry.created_at)
+        self.assertIsNotNone(entry.updated_at)
+
+    def test_updated_at_advances_on_save_but_created_at_is_stable(self):
+        prompt = Prompt.objects.create(
+            question='Original question?', mail_day=timezone.now())
+        original_created = prompt.created_at
+        original_updated = prompt.updated_at
+
+        prompt.question = 'Edited question?'
+        prompt.save()
+        prompt.refresh_from_db()
+
+        self.assertEqual(prompt.created_at, original_created)
+        self.assertGreater(prompt.updated_at, original_updated)
+
+    def test_timestamps_are_required(self):
+        for model in (User, Prompt, Entry):
+            for field_name in ('created_at', 'updated_at'):
+                field = model._meta.get_field(field_name)
+                self.assertFalse(
+                    field.null,
+                    f'{model.__name__}.{field_name} should be NOT NULL')
 
 
 class MailNewsletterTests(TestCase):

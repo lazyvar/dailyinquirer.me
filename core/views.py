@@ -187,15 +187,6 @@ def on_incoming_message(request):
     if todays_prompt is None:
         return HttpResponse('ignored: no prompt for today', status=200)
 
-    already_exists = Entry.objects.filter(
-        pub_date__day=local_time.day,
-        pub_date__month=local_time.month,
-        pub_date__year=local_time.year,
-        author=user,
-    ).exists()
-    if already_exists:
-        return HttpResponse('ignored: entry already exists', status=200)
-
     Entry.objects.create(
         content=stripped_text,
         author=user,
