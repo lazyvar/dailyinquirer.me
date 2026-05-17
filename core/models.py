@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.formats import date_format
 
 from authentication.models import User
@@ -25,3 +26,19 @@ class Entry(models.Model):
                            format='SHORT_DATE_FORMAT',
                            use_l10n=True)
         return f"{self.author.email} - {self.prompt.question[:12]} - {date}"
+
+
+class PromptSend(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    prompt = models.ForeignKey(Prompt, on_delete=models.CASCADE)
+    sent_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'prompt'],
+                name='unique_user_prompt_send'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.prompt.question[:12]}"

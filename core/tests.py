@@ -1,5 +1,6 @@
 import json
 
+from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from django.core import mail
@@ -10,7 +11,7 @@ from django.utils.http import urlsafe_base64_encode
 from authentication.models import User
 from authentication.tokens import account_activation_token
 
-from core.models import Entry, Prompt
+from core.models import Entry, Prompt, PromptSend
 from core.utils import mail_newsletter
 
 
@@ -260,3 +261,18 @@ class MailNewsletterTests(TestCase):
 
         self.assertIsNone(result)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class PromptSendModelTests(TestCase):
+    def test_unique_per_user_and_prompt(self):
+        user = User.objects.create_user(
+            email='ps@example.com', password='mostdope1')
+        prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+        PromptSend.objects.create(user=user, prompt=prompt)
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                PromptSend.objects.create(user=user, prompt=prompt)
