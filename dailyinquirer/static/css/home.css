@@ -5,6 +5,7 @@
   --rule: #d8d4cc;
   --accent: #b22222;
   --accent-dark: #801919;
+  --accent-rgb: 178, 34, 34;
   --paper: #ffffff;
   --serif: 'TypoSlab Irregular Demo', Georgia, 'Times New Roman', serif;
   --body: 'Open Sans', system-ui, sans-serif;
@@ -559,7 +560,7 @@
   color: #fff;
   text-decoration: none;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(178, 34, 34, 0.28);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.28);
 }
 
 #home .ed-signin {
@@ -604,15 +605,13 @@
   border: 1px solid var(--rule);
   border-radius: 8px;
   padding: 20px 18px;
-  transition: border-color 0.15s ease, border-bottom-width 0.15s ease,
-              transform 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 #home .ed-card:hover {
   border-color: var(--accent);
-  border-bottom: 3px solid var(--accent);
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  box-shadow: inset 0 -2px 0 0 var(--accent), 0 4px 14px rgba(0, 0, 0, 0.07);
 }
 
 /* --- Steps -------------------------------------------------- */
@@ -678,7 +677,7 @@
 #home .ed-about__text a {
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(178, 34, 34, 0.3);
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.3);
   transition: border-color 0.12s ease;
 }
 
@@ -707,15 +706,13 @@
   border: 1px solid var(--rule);
   border-radius: 8px;
   padding: 18px 16px;
-  transition: border-color 0.15s ease, border-bottom-width 0.15s ease,
-              transform 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 #home .ed-prompt-card:hover {
   border-color: var(--accent);
-  border-bottom: 3px solid var(--accent);
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  box-shadow: inset 0 -2px 0 0 var(--accent), 0 4px 14px rgba(0, 0, 0, 0.07);
 }
 
 #home .ed-day {
@@ -743,12 +740,13 @@
   line-height: 1.5;
   color: var(--ink-soft);
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 /* Today highlight */
 #home .ed-prompt-card.is-today {
   border-color: var(--accent);
-  background: rgba(178, 34, 34, 0.035);
+  background: rgba(var(--accent-rgb), 0.035);
 }
 
 #home .ed-prompt-card.is-today .ed-day::after {
@@ -780,7 +778,7 @@
 
 /* --- Responsive --------------------------------------------- */
 
-/* Medium: 2-column steps and prompts */
+/* Small screens: 2-column steps and prompts */
 @media (max-width: 576px) {
   #home .ed-hero {
     padding: 40px 0 36px;
