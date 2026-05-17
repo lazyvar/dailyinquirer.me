@@ -1,62 +1,69 @@
-{% extends "core/base.html" %} {% block content %}
-<div class="row justify-content-center mb-0">
-    <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
-</div>
-<div class="row bottom-border justify-content-center mt-0" style="padding-bottom: 6px;">
-    <p class="mb-0"><a href="/settings/">{{ user.email }}</a></p>
-</div>
-<div class="row bottom-border justify-content-center">
-    <div class="col-sm-6">
-        {% if success %}
-        <div class="alert alert-success">
-            <strong>Update success!</strong>
-        </div>
-        {% endif %}
-        {% if form.errors %} {% for field in form %} {% for error in field.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %} {% endif %}
-        <form method="post" action="">
-            {% csrf_token %}
-            <div class="form-check">
-                <label class="form-check-label">
-                <input name="subscribed" type="checkbox" class="form-check-input" 
-                {% if user.is_subscribed %} checked="checked" {% endif %}> Subscribed (receive email every day)
-                </label>
-            </div>
-            <div class="form-group">
-                {% load tz %} 
-                {% with user.timezone as user_tz %}
-                <select class="form-control" name="timezone">
-                    {% for tz in timezones %}
-                    <option value="{{ tz }}"
-                    {% if tz == user_tz %} selected{% endif %}>
-                    {{ tz }}
-                    </option>
-                    {% endfor %}
-                    {% endwith %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block" style="margin-bottom: -0.5rem;">Update settings</button>
-        </form>        
-            <form action="/password_reset/" method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <input type="hidden" class="form-control" placeholder="Email" name="email" maxlength="254" required="" id="id_email" value="{{ user.email }}">
-            </div>
-            <input type="submit" class="btn btn-light btn-block mb-2" value="Reset password" />
-        </form>
-        <form action="/logout/" method="post">
-            {% csrf_token %}
-            <input type="submit" class="btn btn-light btn-block mb-2" value="Logout" />
-        </form>
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="settings">
+  {% include "core/_masthead.html" with tab="Account" %}
+
+  <p class="ed-label">Settings</p>
+
+  {% if success %}
+  <div class="ed-alert ed-alert--ok">Your settings have been updated.</div>
+  {% endif %}
+  {% if form.errors %}
+    {% for field in form %}{% for error in field.errors %}
+    <div class="ed-alert ed-alert--error">{{ error|escape }}</div>
+    {% endfor %}{% endfor %}
+    {% for error in form.non_field_errors %}
+    <div class="ed-alert ed-alert--error">{{ error|escape }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <section class="ed-card">
+    <h2 class="ed-card__head">Subscription &amp; timezone</h2>
+    <p class="ed-card__sub">Control whether you get a daily prompt and when it arrives.</p>
+    <form method="post" action="">
+      {% csrf_token %}
+      <div class="ed-field">
+        <label class="ed-check">
+          <input type="checkbox" name="subscribed"{% if user.is_subscribed %} checked{% endif %}>
+          <span>Subscribed &mdash; receive a writing prompt by email every day.</span>
+        </label>
+      </div>
+      <div class="ed-field">
+        <label class="ed-field__label" for="id_timezone">Time zone</label>
+        {% load tz %}
+        {% with user.timezone as user_tz %}
+        <select class="ed-input" name="timezone" id="id_timezone">
+          {% for tz in timezones %}
+          <option value="{{ tz }}"{% if tz == user_tz %} selected{% endif %}>{{ tz }}</option>
+          {% endfor %}
+        </select>
+        {% endwith %}
+        <p class="ed-hint">Your daily prompt is sent in the morning, in this time zone.</p>
+      </div>
+      <button class="ed-btn" type="submit">Update settings</button>
+    </form>
+  </section>
+
+  <section class="ed-card">
+    <h2 class="ed-card__head">Account</h2>
+    <p class="ed-card__sub">Manage access to your account.</p>
+    <div class="ed-actions">
+      <form action="/password_reset/" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ user.email }}">
+        <button class="ed-btn-ghost" type="submit">Reset password</button>
+      </form>
+      <form action="/logout/" method="post">
+        {% csrf_token %}
+        <button class="ed-btn-ghost" type="submit">Log out</button>
+      </form>
     </div>
+    <p class="ed-hint">Reset password sends a link to {{ user.email }}.</p>
+  </section>
 </div>
-
-
 {% endblock %}

@@ -1,0 +1,511 @@
+/* ============================================================
+   ACCOUNT PAGES — dashboard & settings
+   Editorial theme. All selectors scoped under .app / #dashboard /
+   #settings so styles cannot leak. Consumes tokens from tokens.css.
+   ============================================================ */
+
+.app {
+  padding-top: 40px;
+  padding-bottom: 24px;
+}
+
+/* --- Masthead ----------------------------------------------- */
+
+.app .ed-masthead {
+  position: relative;
+  margin: 12px 0 8px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-bottom: 3px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  padding: 26px 24px;
+}
+
+.app .ed-masthead__tab {
+  position: absolute;
+  bottom: 100%;
+  left: 22px;
+  margin-bottom: -1px;
+  padding: 7px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border-radius: 7px 7px 0 0;
+}
+
+.app .ed-masthead__name {
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 5.5vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.app .ed-masthead__name a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.app .ed-masthead__email {
+  font-family: var(--body);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+}
+
+.app .ed-masthead__email a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.app .ed-masthead__email a:hover {
+  text-decoration: underline;
+}
+
+/* --- Section label ------------------------------------------ */
+
+.app .ed-label {
+  font-family: var(--body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
+  margin: 28px 0 14px;
+}
+
+/* --- Card --------------------------------------------------- */
+
+.app .ed-card {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 22px 20px;
+  margin-bottom: 14px;
+}
+
+.app .ed-card:last-child {
+  margin-bottom: 0;
+}
+
+.app .ed-card__head {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.app .ed-card__sub {
+  font-family: var(--body);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+}
+
+/* --- Buttons ------------------------------------------------ */
+
+.app .ed-btn {
+  display: inline-block;
+  padding: 11px 24px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.app .ed-btn:hover,
+.app .ed-btn:focus {
+  background: var(--accent-dark);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.28);
+}
+
+.app .ed-btn-ghost {
+  display: inline-block;
+  padding: 10px 22px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.app .ed-btn-ghost:hover,
+.app .ed-btn-ghost:focus {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* --- Form fields -------------------------------------------- */
+
+.app .ed-field {
+  margin-bottom: 18px;
+}
+
+.app .ed-field:last-child {
+  margin-bottom: 0;
+}
+
+.app .ed-field__label {
+  display: block;
+  font-family: var(--body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+
+.app .ed-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-family: var(--body);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: #fff;
+}
+
+.app .ed-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.app .ed-check {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-family: var(--body);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.app .ed-check input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.app .ed-hint {
+  font-family: var(--body);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  margin: 8px 0 0;
+}
+
+.app .ed-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app .ed-actions form {
+  margin: 0;
+}
+
+/* --- Alert -------------------------------------------------- */
+
+.app .ed-alert {
+  font-family: var(--body);
+  font-size: 0.83rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 11px 14px;
+  margin-bottom: 14px;
+}
+
+.app .ed-alert--ok {
+  background: rgba(var(--accent-rgb), 0.05);
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  color: var(--accent-dark);
+}
+
+.app .ed-alert--error {
+  background: rgba(var(--danger-rgb), 0.05);
+  border: 1px solid var(--danger);
+  border-left-width: 3px;
+  color: var(--danger);
+}
+
+/* --- Dashboard: filter bar ---------------------------------- */
+
+#dashboard .ed-filters {
+  margin-top: 18px;
+}
+
+#dashboard .ed-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+#dashboard .ed-search {
+  flex: 1;
+  box-sizing: border-box;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--body);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: #fff;
+}
+
+#dashboard .ed-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#dashboard .ed-filter-disclosure {
+  margin-top: 10px;
+}
+
+#dashboard .ed-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-family: var(--body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  list-style: none;
+}
+
+#dashboard .ed-filter-toggle::-webkit-details-marker {
+  display: none;
+}
+
+#dashboard .ed-filter-toggle::after {
+  content: "\25be";
+  font-size: 0.7rem;
+}
+
+#dashboard .ed-filter-disclosure[open] .ed-filter-toggle::after {
+  content: "\25b4";
+}
+
+#dashboard .ed-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+#dashboard .ed-filter-panel .ed-field {
+  margin-bottom: 0;
+}
+
+#dashboard .ed-filter-panel .ed-input {
+  width: auto;
+}
+
+#dashboard .ed-filter-clear {
+  align-self: center;
+  font-family: var(--body);
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
+
+#dashboard .ed-filter-clear:hover {
+  color: var(--accent);
+}
+
+#dashboard .ed-count {
+  font-family: var(--body);
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  margin: 20px 0 0;
+}
+
+#dashboard .ed-count b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* --- Dashboard: entries ------------------------------------- */
+
+#dashboard .ed-entry {
+  margin: 14px 0 0;
+}
+
+#dashboard .ed-entry__cat {
+  font-family: var(--body);
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 6px;
+}
+
+#dashboard .ed-entry__q {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+#dashboard .ed-entry__date {
+  font-family: var(--body);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin: 0 0 10px;
+}
+
+#dashboard .ed-entry__body {
+  font-family: var(--body);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+#dashboard .ed-entry__body p {
+  margin: 0 0 0.8em;
+}
+
+#dashboard .ed-entry__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Dashboard: pagination ---------------------------------- */
+
+#dashboard .ed-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+
+#dashboard .ed-page {
+  min-width: 34px;
+  text-align: center;
+  padding: 7px 10px;
+  font-family: var(--body);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+#dashboard .ed-page:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#dashboard .ed-page.is-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+#dashboard .ed-page.is-disabled,
+#dashboard .ed-page.is-disabled:hover {
+  color: var(--ink-faint);
+  border-color: var(--rule);
+  border-style: dashed;
+}
+
+/* --- Empty state -------------------------------------------- */
+
+.app .ed-empty {
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 14px;
+}
+
+.app .ed-empty h2 {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.app .ed-empty p {
+  font-family: var(--body);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.app .ed-empty a {
+  color: var(--accent);
+}
+
+/* --- Responsive --------------------------------------------- */
+
+@media (max-width: 480px) {
+  .app .ed-masthead {
+    padding: 22px 18px;
+  }
+
+  #dashboard .ed-search-row {
+    flex-direction: column;
+  }
+
+  #dashboard .ed-filter-panel .ed-field,
+  #dashboard .ed-filter-panel .ed-input {
+    width: 100%;
+  }
+}
+
+/* --- Reduced motion ----------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .app .ed-btn,
+  .app .ed-btn-ghost {
+    transition: none;
+  }
+
+  .app .ed-btn:hover,
+  .app .ed-btn:focus {
+    transform: none;
+  }
+}

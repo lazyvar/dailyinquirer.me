@@ -14,6 +14,9 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.utils.dateparse import parse_date
 
 from core.models import Entry, Prompt
 from core.forms import ResendConfirmationForm, SettingsForm
@@ -26,18 +29,80 @@ import json
 import pytz
 
 
+ENTRIES_PER_PAGE = 25
+
+
 def index(request):
     if request.user.is_authenticated:
         if request.user.confirmed_email:
-            entries = Entry.objects.filter(author=request.user).\
-                order_by("-pub_date")
-            return render(request, 'core/index_logged_in.html',
-                          {'entries': entries})
+            return _dashboard(request)
         else:
             logout(request)
             return redirect('unconfirmed_email')
     else:
         return render(request, 'core/index.html')
+
+
+def _dashboard(request):
+    entries = Entry.objects.filter(author=request.user).select_related('prompt')
+
+    q = request.GET.get('q', '').strip()
+    date_from = request.GET.get('from', '').strip()
+    date_to = request.GET.get('to', '').strip()
+    category = request.GET.get('category', '').strip()
+    sort = request.GET.get('sort', 'newest').strip()
+
+    if q:
+        entries = entries.filter(
+            Q(content__icontains=q) | Q(prompt__question__icontains=q))
+
+    parsed_from = parse_date(date_from) if date_from else None
+    if parsed_from:
+        entries = entries.filter(pub_date__date__gte=parsed_from)
+
+    parsed_to = parse_date(date_to) if date_to else None
+    if parsed_to:
+        entries = entries.filter(pub_date__date__lte=parsed_to)
+
+    if category:
+        entries = entries.filter(prompt__category=category)
+
+    if sort == 'oldest':
+        entries = entries.order_by('pub_date')
+    else:
+        sort = 'newest'
+        entries = entries.order_by('-pub_date')
+
+    paginator = Paginator(entries, ENTRIES_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    categories = Entry.objects.filter(author=request.user) \
+        .exclude(prompt__category__isnull=True) \
+        .exclude(prompt__category='') \
+        .values_list('prompt__category', flat=True) \
+        .distinct().order_by('prompt__category')
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    for key in list(params.keys()):
+        if not params.get(key):
+            del params[key]
+    querystring = params.urlencode()
+
+    context = {
+        'entries': page_obj.object_list,
+        'page_obj': page_obj,
+        'total_count': paginator.count,
+        'categories': categories,
+        'filters_active': bool(q or parsed_from or parsed_to or category),
+        'querystring': querystring,
+        'q': q,
+        'date_from': date_from,
+        'date_to': date_to,
+        'category': category,
+        'sort': sort,
+    }
+    return render(request, 'core/index_logged_in.html', context)
 
 
 @login_required
@@ -186,15 +251,6 @@ def on_incoming_message(request):
     ).first()
     if todays_prompt is None:
         return HttpResponse('ignored: no prompt for today', status=200)
-
-    already_exists = Entry.objects.filter(
-        pub_date__day=local_time.day,
-        pub_date__month=local_time.month,
-        pub_date__year=local_time.year,
-        author=user,
-    ).exists()
-    if already_exists:
-        return HttpResponse('ignored: entry already exists', status=200)
 
     Entry.objects.create(
         content=stripped_text,
