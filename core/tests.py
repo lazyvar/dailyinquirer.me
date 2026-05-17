@@ -406,3 +406,40 @@ class SendDailyMailCommandTests(TestCase):
         call_command('send_daily_mail')
 
         self.assertEqual(mock_send.call_count, 2)
+
+
+class AdminSendPromptButtonTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            email='admin@example.com', password='mostdope1')
+        self.target = User.objects.create_user(
+            email='target@example.com', password='mostdope1')
+        self.target.timezone = 'UTC'
+        self.target.confirmed_email = True
+        self.target.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+        self.client.force_login(self.admin)
+
+    def _send_url(self):
+        return reverse('admin:authentication_user_send_prompt',
+                       kwargs={'pk': self.target.pk})
+
+    def test_button_sends_and_records_a_promptsend(self):
+        response = self.client.get(self._send_url())
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.target).count(), 1)
+
+    def test_button_force_resends_when_already_sent(self):
+        PromptSend.objects.create(user=self.target, prompt=self.prompt)
+
+        response = self.client.get(self._send_url())
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            PromptSend.objects.filter(user=self.target).count(), 1)
