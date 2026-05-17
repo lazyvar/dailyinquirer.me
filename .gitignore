@@ -104,3 +104,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Brainstorming visual companion
+.superpowers/
+.venv/
+runserver.log

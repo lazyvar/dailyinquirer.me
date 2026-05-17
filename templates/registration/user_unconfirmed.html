@@ -1,11 +1,5 @@
- {% extends "core/base.html" %} {% block content %}
-<div class="row justify-content-center bottom-border mb-3">
-    <h2 class="typewriter bold"><a href="/" class="chip">The Daily Inquirer</a></h2>
-</div>
-<div class="row justify-content-center bottom-border">
-    <div class="col-sm-8">
-        <h3>Your email has not yet been confirmed!</h3>
-        <p> You must confirm your email before continuing. If you did not receive an email you can <a href="/resend_confirmation/">resend it.</a></p>
-    </div>
-</div>
+{% extends "registration/auth_base.html" %}
+{% block card %}
+<h1>Confirm your email</h1>
+<p class="auth-subtitle" style="margin-bottom: 0;">You must confirm your email before continuing. If you did not receive an email you can <a href="/resend_confirmation/" class="dotted">resend it</a>.</p>
 {% endblock %}
