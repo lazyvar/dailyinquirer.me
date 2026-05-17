@@ -1,0 +1,2 @@
+email-reply-parser
+html2text
