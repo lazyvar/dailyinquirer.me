@@ -12,6 +12,7 @@
     for (var i = 0; i < buttons.length; i++) {
       var match = buttons[i].getAttribute('data-theme') === theme;
       buttons[i].classList.toggle('is-active', match);
+      buttons[i].setAttribute('aria-pressed', match ? 'true' : 'false');
     }
   }
 

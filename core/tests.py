@@ -59,3 +59,12 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('terms'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'home.css')
+
+    def test_home_default_theme_is_broadsheet(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'class="theme-broadsheet"')
+
+    def test_home_cta_links_are_correct(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'href="/register/"')
+        self.assertContains(response, 'href="/login/"')
