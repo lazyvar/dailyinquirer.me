@@ -1,5 +1,7 @@
 import json
+from unittest.mock import patch
 
+from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -325,3 +327,82 @@ class SendPromptToUserTests(TestCase):
         self.assertIsNone(result)
         self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(PromptSend.objects.count(), 0)
+
+
+class SendDailyMailCommandTests(TestCase):
+    def _make_user(self, email, timezone_name='UTC'):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.timezone = timezone_name
+        user.confirmed_email = True
+        user.is_subscribed = True
+        user.save()
+        return user
+
+    @patch.object(User, 'local_time')
+    def test_skips_users_before_8am(self, mock_local_time):
+        self._make_user('early@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=6)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
+
+    @patch.object(User, 'local_time')
+    def test_sends_at_or_after_8am(self, mock_local_time):
+        user = self._make_user('due@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=8)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+    @patch.object(User, 'local_time')
+    def test_skips_unconfirmed_and_unsubscribed(self, mock_local_time):
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+
+        unconfirmed = User.objects.create_user(
+            email='unconfirmed@example.com', password='mostdope1')
+        unconfirmed.timezone = 'UTC'
+        unconfirmed.is_subscribed = True
+        unconfirmed.save()
+
+        unsubscribed = User.objects.create_user(
+            email='unsubscribed@example.com', password='mostdope1')
+        unsubscribed.timezone = 'UTC'
+        unsubscribed.confirmed_email = True
+        unsubscribed.is_subscribed = False
+        unsubscribed.save()
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    @patch.object(User, 'local_time')
+    def test_does_not_resend_when_already_sent(self, mock_local_time):
+        user = self._make_user('once@example.com')
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=8)
+
+        call_command('send_daily_mail')
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+    @patch.object(User, 'local_time')
+    @patch('core.management.commands.send_daily_mail.send_prompt_to_user')
+    def test_one_user_failure_does_not_abort_the_run(
+            self, mock_send, mock_local_time):
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+        self._make_user('a@example.com')
+        self._make_user('b@example.com')
+        mock_send.side_effect = [Exception('boom'), None]
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(mock_send.call_count, 2)
