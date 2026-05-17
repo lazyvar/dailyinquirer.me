@@ -481,3 +481,378 @@
     letter-spacing: 0.08em;
   }
 }
+
+/* ============================================================
+   EDITORIAL THEME
+   All selectors scoped to #home .ed-* or #home.theme-editorial
+   ============================================================ */
+
+/* --- Hero ---------------------------------------------------- */
+
+#home .ed-hero {
+  padding: 56px 0 52px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 48px;
+}
+
+#home .ed-kicker {
+  font-family: var(--body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin: 0 0 18px;
+}
+
+#home .ed-headline {
+  font-family: var(--serif);
+  font-size: clamp(2.1rem, 7vw, 3rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+
+#home .ed-headline em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+#home .ed-sub {
+  font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin: 0 0 32px;
+  max-width: 52ch;
+}
+
+#home .ed-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* --- CTA button --------------------------------------------- */
+
+#home .ed-btn {
+  display: inline-block;
+  padding: 13px 28px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border-radius: 9999px;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+#home .ed-btn:hover,
+#home .ed-btn:focus {
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(178, 34, 34, 0.28);
+}
+
+#home .ed-signin {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin: 0;
+  text-align: left;
+}
+
+#home .ed-signin a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
+
+#home .ed-signin a:hover {
+  color: var(--accent);
+}
+
+/* --- Sections ----------------------------------------------- */
+
+#home .ed-section {
+  margin-bottom: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#home .ed-label {
+  font-family: var(--body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
+  margin: 0 0 20px;
+}
+
+/* --- Cards -------------------------------------------------- */
+
+#home .ed-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 20px 18px;
+  transition: border-color 0.15s ease, border-bottom-width 0.15s ease,
+              transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#home .ed-card:hover {
+  border-color: var(--accent);
+  border-bottom: 3px solid var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+/* --- Steps -------------------------------------------------- */
+
+#home .ed-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+#home .ed-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+#home .ed-step img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+#home .ed-step h3 {
+  font-family: var(--body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+#home .ed-step p {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* --- About -------------------------------------------------- */
+
+#home .ed-about__grid {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 36px;
+  align-items: start;
+}
+
+#home .ed-about__text p {
+  font-family: var(--body);
+  font-size: 0.9rem;
+  line-height: 1.72;
+  color: var(--ink-soft);
+  margin: 0 0 0.85em;
+}
+
+#home .ed-about__text p:last-child {
+  margin-bottom: 0;
+}
+
+#home .ed-about__text a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(178, 34, 34, 0.3);
+  transition: border-color 0.12s ease;
+}
+
+#home .ed-about__text a:hover {
+  border-bottom-color: var(--accent);
+}
+
+#home .ed-about__img {
+  display: block;
+  max-width: 200px;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* --- Prompts ------------------------------------------------ */
+
+#home .ed-prompts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+#home .ed-prompt-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 18px 16px;
+  transition: border-color 0.15s ease, border-bottom-width 0.15s ease,
+              transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#home .ed-prompt-card:hover {
+  border-color: var(--accent);
+  border-bottom: 3px solid var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+#home .ed-day {
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+#home .ed-genre {
+  font-family: var(--body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+#home .ed-text {
+  font-family: var(--body);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Today highlight */
+#home .ed-prompt-card.is-today {
+  border-color: var(--accent);
+  background: rgba(178, 34, 34, 0.035);
+}
+
+#home .ed-prompt-card.is-today .ed-day::after {
+  content: " \00B7 Today";
+  color: var(--accent);
+  font-weight: 400;
+}
+
+/* --- Final CTA ---------------------------------------------- */
+
+#home .ed-final {
+  padding: 52px 0 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+#home .ed-final__title {
+  font-family: var(--serif);
+  font-size: clamp(1.3rem, 4vw, 1.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* --- Responsive --------------------------------------------- */
+
+/* Medium: 2-column steps and prompts */
+@media (max-width: 576px) {
+  #home .ed-hero {
+    padding: 40px 0 36px;
+    margin-bottom: 36px;
+  }
+
+  #home .ed-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #home .ed-about__grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  #home .ed-about__img {
+    max-width: 160px;
+  }
+
+  #home .ed-prompts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Narrow: single column */
+@media (max-width: 400px) {
+  #home .ed-hero {
+    padding: 28px 0 28px;
+    margin-bottom: 28px;
+  }
+
+  #home .ed-steps {
+    grid-template-columns: 1fr;
+  }
+
+  #home .ed-step {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  #home .ed-step img {
+    flex-shrink: 0;
+  }
+
+  #home .ed-prompts {
+    grid-template-columns: 1fr;
+  }
+
+  #home .ed-section {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+  }
+
+  #home .ed-final {
+    padding: 36px 0 28px;
+  }
+}
+
+/* --- Reduced motion ----------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  #home .ed-btn,
+  #home .ed-card,
+  #home .ed-prompt-card {
+    transition: none;
+  }
+
+  #home .ed-btn:hover,
+  #home .ed-btn:focus,
+  #home .ed-card:hover,
+  #home .ed-prompt-card:hover {
+    transform: none;
+  }
+}
