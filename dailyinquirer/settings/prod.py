@@ -3,27 +3,43 @@ import dj_database_url
 
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 
-DEBUG = os.environ.get('DEBUG', False)
+DEBUG = os.environ.get('DEBUG') == 'True'
 
-ALLOWED_HOSTS = ['dailyinquirer.me', 'www.dailyinquirer.me']
+ALLOWED_HOSTS = [
+    'dailyinquirer.me',
+    'www.dailyinquirer.me',
+    'dailyinquirer.fly.dev',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://dailyinquirer.me',
+    'https://www.dailyinquirer.me',
+    'https://dailyinquirer.fly.dev',
+]
 
 SECURE_SSL_REDIRECT = True
 
-# db
+# Fly terminates TLS at its proxy and forwards over plain HTTP with this
+# header set. Without it, SECURE_SSL_REDIRECT causes an infinite redirect loop.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# www.dailyinquirer.me is redirected to the naked apex domain.
+MIDDLEWARE.insert(1, 'dailyinquirer.middleware.RedirectWwwToNakedMiddleware')
+
+# db
 db_from_env = dj_database_url.config()
 
 DATABASES['default'].update(db_from_env)
 
-# mailgun email
-
-MAILGUN_ACCESS_KEY = os.environ.get('MAILGUN_ACCESS_KEY', None)
-
+# email (AWS SES via django-anymail)
+# Credentials come from the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars,
+# which boto3 reads automatically.
 INSTALLED_APPS.append("anymail")
 
 ANYMAIL = {
-    "MAILGUN_API_KEY": MAILGUN_ACCESS_KEY,
-    "MAILGUN_SENDER_DOMAIN": 'dailyinquirer.me',
+    "AMAZON_SES_CLIENT_PARAMS": {
+        "region_name": "us-east-1",
+    },
 }
 
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend" 
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"

@@ -1,0 +1,13 @@
+.venv
+.git
+.gitignore
+.gitattributes
+.DS_Store
+*.pyc
+__pycache__
+db.sqlite3
+dist
+docs
+.claude
+Procfile
+runtime.txt

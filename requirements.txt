@@ -1,6 +1,6 @@
 Django~=5.2
 whitenoise~=6.0
-django-anymail[mailgun]~=13.0
+django-anymail[amazon-ses]~=13.0
 psycopg[binary]~=3.2
 dj-database-url~=2.3
 gunicorn~=23.0
