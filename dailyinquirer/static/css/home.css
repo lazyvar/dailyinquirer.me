@@ -147,8 +147,6 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-decoration: none;
-  border-radius: 0;
-  border: none;
   transition: background 0.15s ease;
 }
 
@@ -415,35 +413,31 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Reset column-rule borders for 2-col layout */
+  /*
+   * Fully reset 3-column nth-child border/padding rules, then establish the
+   * correct 2-column layout. Rules are ordered so that 2-column selectors
+   * always win, making the result correct for any number of cards.
+   */
+
+  /* Reset base: undo all 3-column per-position overrides */
   #home .bs-prompt {
     border-right: 1px solid var(--rule);
+    border-top: none;
     padding: 12px;
   }
 
-  #home .bs-prompt:nth-child(3n) {
-    border-right: 1px solid var(--rule);
-    padding-right: 12px;
-  }
-
-  #home .bs-prompt:nth-child(n+4) {
-    border-top: none;
-    padding-top: 12px;
-  }
-
-  #home .bs-prompt:nth-child(3n+1) {
-    padding-left: 12px;
-  }
-
+  /* 2-column layout: right column (even items) — no right border or right padding */
   #home .bs-prompt:nth-child(2n) {
     border-right: none;
     padding-right: 0;
   }
 
+  /* 2-column layout: left column (odd items) — no left padding */
   #home .bs-prompt:nth-child(2n+1) {
     padding-left: 0;
   }
 
+  /* Top border on every item from the 3rd onward (second row and beyond) */
   #home .bs-prompt:nth-child(n+3) {
     border-top: 1px solid var(--rule);
     padding-top: 12px;
@@ -470,30 +464,16 @@
     grid-template-columns: 1fr;
   }
 
+  /* 1-column layout: every card gets a top border and no side borders/padding */
   #home .bs-prompt {
     border-right: none;
-    padding: 12px 0;
     border-top: 1px solid var(--rule);
+    padding: 12px 0;
   }
 
   #home .bs-prompt:first-child {
     border-top: none;
     padding-top: 0;
-  }
-
-  #home .bs-prompt:nth-child(2n),
-  #home .bs-prompt:nth-child(3n),
-  #home .bs-prompt:nth-child(2n+1),
-  #home .bs-prompt:nth-child(3n+1) {
-    border-right: none;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  #home .bs-prompt:nth-child(n+3),
-  #home .bs-prompt:nth-child(n+4) {
-    border-top: 1px solid var(--rule);
-    padding-top: 12px;
   }
 
   #home .bs-dateline {
