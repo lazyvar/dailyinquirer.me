@@ -1,0 +1,4 @@
+# Development-only dependencies. Production installs requirements.txt only.
+-r requirements.txt
+
+django-mail-viewer~=2.2
