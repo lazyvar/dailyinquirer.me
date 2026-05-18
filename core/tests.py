@@ -24,7 +24,6 @@ class EmailConfirmationTests(TestCase):
     def test_register_sends_activation_email(self):
         response = self.client.post(reverse('register'), {
             'email': 'newuser@example.com',
-            'timezone': 'US/Eastern',
             'password1': 'mostdope1',
             'password2': 'mostdope1',
         })
@@ -844,3 +843,21 @@ class SettingsSendTimeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertEqual(self.user.mail_time, 420)
+
+
+class SignupWithoutTimezoneTests(TestCase):
+    def test_register_succeeds_with_only_email_and_password(self):
+        response = self.client.post(reverse('register'), {
+            'email': 'notz@example.com',
+            'password1': 'mostdope1',
+            'password2': 'mostdope1',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        user = User.objects.get(email='notz@example.com')
+        self.assertEqual(user.timezone, '')
+        self.assertFalse(user.onboarded)
+
+    def test_register_page_has_no_timezone_field(self):
+        response = self.client.get(reverse('register'))
+        self.assertNotContains(response, 'name="timezone"')

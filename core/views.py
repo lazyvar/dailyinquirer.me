@@ -169,12 +169,11 @@ def register(request):
                 return render(request, template, context)
             else:
                 template = 'registration/register.html'
-                context = {'form': form, 'timezones': pytz.common_timezones}
+                context = {'form': form}
                 return render(request, template, context)
         else:
             template = 'registration/register.html'
-            context = {'timezones': pytz.common_timezones}
-            return render(request, template, context)
+            return render(request, template, {})
 
 
 def unconfirmed_email(request):
