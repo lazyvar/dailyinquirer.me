@@ -168,6 +168,10 @@ class AuthPagesTests(TestCase):
 @override_settings(INBOUND_SHARED_SECRET='test-secret')
 class IncomingMessageTests(TestCase):
     def setUp(self):
+        # The 0007 seed migration populates 30 days of prompts into every
+        # database, the test DB included. Clear them so each test controls
+        # exactly which prompt exists for "today".
+        Prompt.objects.all().delete()
         self.user = User.objects.create_user(
             email='writer@example.com', password='mostdope1')
         self.user.timezone = 'UTC'
@@ -287,6 +291,8 @@ class TimestampTests(TestCase):
 
 class MailNewsletterTests(TestCase):
     def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
         self.user = User.objects.create_user(
             email='nl@example.com', password='mostdope1')
         self.user.timezone = 'UTC'
@@ -339,6 +345,8 @@ class PromptSendModelTests(TestCase):
 
 class SendPromptToUserTests(TestCase):
     def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
         self.user = User.objects.create_user(
             email='p@example.com', password='mostdope1')
         self.user.timezone = 'UTC'
@@ -387,6 +395,10 @@ class SendPromptToUserTests(TestCase):
 
 
 class SendDailyMailCommandTests(TestCase):
+    def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
+
     def _make_user(self, email, timezone_name='UTC'):
         user = User.objects.create_user(email=email, password='mostdope1')
         user.timezone = timezone_name
@@ -467,6 +479,8 @@ class SendDailyMailCommandTests(TestCase):
 
 class AdminSendPromptButtonTests(TestCase):
     def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
         self.admin = User.objects.create_superuser(
             email='admin@example.com', password='mostdope1')
         self.target = User.objects.create_user(
