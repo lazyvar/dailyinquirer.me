@@ -43,7 +43,16 @@
           {% endfor %}
         </select>
         {% endwith %}
-        <p class="ed-hint">Your daily prompt is sent in the morning, in this time zone.</p>
+        <p class="ed-hint">Your daily prompt is sent in this time zone.</p>
+      </div>
+      <div class="ed-field">
+        <label class="ed-field__label" for="id_mail_hour">Delivery time</label>
+        <select class="ed-input" name="mail_hour" id="id_mail_hour">
+          {% for h in hours %}
+          <option value="{{ h.0 }}"{% if h.0 == user.mail_hour %} selected{% endif %}>{{ h.1 }}</option>
+          {% endfor %}
+        </select>
+        <p class="ed-hint">When your daily prompt arrives, in the time zone above.</p>
       </div>
       <button class="ed-btn" type="submit">Update settings</button>
     </form>

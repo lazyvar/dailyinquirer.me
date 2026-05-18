@@ -53,7 +53,7 @@ Two apps:
 
 `core/utils.py:send_prompt_to_user(user, force=False)` is the single entry point: it resolves today's `Prompt` for the user's local date, sends it via `mail_newsletter` (multipart text + `core/daily_email.html`), and records a `PromptSend`. It skips users who already have a `PromptSend` for that prompt unless `force=True`, and returns `None` whenever nothing was sent (no valid tz, no prompt, or already sent).
 
-The `send_daily_mail` management command iterates confirmed, subscribed users and calls `send_prompt_to_user` for anyone whose local hour is ≥ 8. It runs **hourly** so each user is caught when their local clock passes 8am; per-user exceptions are caught and logged so one failure doesn't abort the run. The `PromptSend` dedup means re-running it the same day is a no-op.
+The `send_daily_mail` management command iterates confirmed, subscribed users and calls `send_prompt_to_user` for anyone whose local hour has reached their per-user send hour (`User.mail_hour`, derived from the `mail_time` minutes-from-midnight field; default 8am). It runs **hourly** so each user is caught when their local clock passes their chosen hour; per-user exceptions are caught and logged so one failure doesn't abort the run. The `PromptSend` dedup means re-running it the same day is a no-op.
 
 In production the cron runs **in-process**: `supercronic` (installed in the `Dockerfile`, pinned) executes the repo-root `crontab` alongside gunicorn, started by `start.sh`. This is why `fly.toml` sets `auto_stop_machines = "off"` — background jobs aren't HTTP traffic, so an autostopped machine would silently skip deliveries.
 

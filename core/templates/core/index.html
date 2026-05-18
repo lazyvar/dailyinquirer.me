@@ -64,15 +64,28 @@
   <section class="ed-section">
     <p class="ed-label">A week of prompts</p>
     <div class="ed-prompts">
-      <article class="ed-prompt-card{% if today == 'Monday' %} is-today{% endif %}"><p class="ed-day">Monday</p><p class="ed-genre">Expository</p><p class="ed-text">Explain what pollution is.</p></article>
-      <article class="ed-prompt-card{% if today == 'Tuesday' %} is-today{% endif %}"><p class="ed-day">Tuesday</p><p class="ed-genre">Descriptive</p><p class="ed-text">Describe your first car.</p></article>
-      <article class="ed-prompt-card{% if today == 'Wednesday' %} is-today{% endif %}"><p class="ed-day">Wednesday</p><p class="ed-genre">Persuasive</p><p class="ed-text">Can anything be funny, or are some things off limits?</p></article>
-      <article class="ed-prompt-card{% if today == 'Thursday' %} is-today{% endif %}"><p class="ed-day">Thursday</p><p class="ed-genre">Narrative</p><p class="ed-text">Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p></article>
-      <article class="ed-prompt-card{% if today == 'Friday' %} is-today{% endif %}"><p class="ed-day">Friday</p><p class="ed-genre">Free Write</p><p class="ed-text">Happy Friday! Write about whatever you want.</p></article>
-      <article class="ed-prompt-card{% if today == 'Saturday' %} is-today{% endif %}"><p class="ed-day">Saturday</p><p class="ed-genre">Creative</p><p class="ed-text">Write a haiku about the mailman.</p></article>
-      <article class="ed-prompt-card{% if today == 'Sunday' %} is-today{% endif %}"><p class="ed-day">Sunday</p><p class="ed-genre">Reflective</p><p class="ed-text">Have you ever made a New Year's resolution that you kept?</p></article>
+      <article class="ed-prompt-card{% if today == 'Monday' %} is-today{% endif %}" data-weekday="1"><p class="ed-day">Monday</p><p class="ed-genre">Expository</p><p class="ed-text">Explain what pollution is.</p></article>
+      <article class="ed-prompt-card{% if today == 'Tuesday' %} is-today{% endif %}" data-weekday="2"><p class="ed-day">Tuesday</p><p class="ed-genre">Descriptive</p><p class="ed-text">Describe your first car.</p></article>
+      <article class="ed-prompt-card{% if today == 'Wednesday' %} is-today{% endif %}" data-weekday="3"><p class="ed-day">Wednesday</p><p class="ed-genre">Persuasive</p><p class="ed-text">Can anything be funny, or are some things off limits?</p></article>
+      <article class="ed-prompt-card{% if today == 'Thursday' %} is-today{% endif %}" data-weekday="4"><p class="ed-day">Thursday</p><p class="ed-genre">Narrative</p><p class="ed-text">Write a story about a family who has a tree with dollar bills for leaves in their backyard.</p></article>
+      <article class="ed-prompt-card{% if today == 'Friday' %} is-today{% endif %}" data-weekday="5"><p class="ed-day">Friday</p><p class="ed-genre">Free Write</p><p class="ed-text">Happy Friday! Write about whatever you want.</p></article>
+      <article class="ed-prompt-card{% if today == 'Saturday' %} is-today{% endif %}" data-weekday="6"><p class="ed-day">Saturday</p><p class="ed-genre">Creative</p><p class="ed-text">Write a haiku about the mailman.</p></article>
+      <article class="ed-prompt-card{% if today == 'Sunday' %} is-today{% endif %}" data-weekday="0"><p class="ed-day">Sunday</p><p class="ed-genre">Reflective</p><p class="ed-text">Have you ever made a New Year's resolution that you kept?</p></article>
     </div>
   </section>
 
 </div>
+
+<script>
+  (function () {
+    // Highlight the prompt for the visitor's *local* weekday. The server
+    // renders a highlight in its own time zone; this corrects it to the
+    // browser's local time so the right day is marked wherever you are.
+    var localDay = new Date().getDay();  // 0 = Sunday … 6 = Saturday, local
+    var cards = document.querySelectorAll('#home .ed-prompt-card');
+    cards.forEach(function (card) {
+      card.classList.toggle('is-today', Number(card.dataset.weekday) === localDay);
+    });
+  })();
+</script>
 {% endblock %}

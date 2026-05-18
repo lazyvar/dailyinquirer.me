@@ -19,7 +19,8 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 
 from core.models import Entry, Prompt
-from core.forms import ResendConfirmationForm, SettingsForm
+from core.forms import (HOUR_CHOICES, OnboardingForm, ResendConfirmationForm,
+                        SettingsForm)
 from core.utils import mail_newsletter
 
 from datetime import datetime
@@ -114,18 +115,44 @@ def settings(request):
             user = request.user
             user.is_subscribed = form.cleaned_data['subscribed']
             user.timezone = form.cleaned_data['timezone']
+            user.mail_time = int(form.cleaned_data['mail_hour']) * 60
             user.save()
 
-            context = {'success': True, 'timezones': pytz.common_timezones}
+            context = {'success': True, 'timezones': pytz.common_timezones,
+                       'hours': HOUR_CHOICES}
             return render(request, 'core/settings.html', context)
         else:
             template = 'core/settings.html'
-            context = {'form': form, 'timezones': pytz.common_timezones}
+            context = {'form': form, 'timezones': pytz.common_timezones,
+                       'hours': HOUR_CHOICES}
             return render(request, template, context)
     else:
-        context = {'timezones': pytz.common_timezones}
+        context = {'timezones': pytz.common_timezones, 'hours': HOUR_CHOICES}
 
     return render(request, 'core/settings.html', context)
+
+
+@login_required
+def onboarding(request):
+    if request.user.onboarded:
+        return redirect('index')
+
+    if request.method == 'POST':
+        form = OnboardingForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            user.is_subscribed = form.cleaned_data['subscribed']
+            user.timezone = form.cleaned_data['timezone']
+            user.mail_time = int(form.cleaned_data['mail_hour']) * 60
+            user.onboarded = True
+            user.save()
+            return redirect('index')
+        context = {'form': form, 'timezones': pytz.common_timezones,
+                   'hours': HOUR_CHOICES}
+        return render(request, 'core/onboarding.html', context)
+
+    context = {'timezones': pytz.common_timezones, 'hours': HOUR_CHOICES}
+    return render(request, 'core/onboarding.html', context)
 
 
 def register(request):
@@ -142,12 +169,11 @@ def register(request):
                 return render(request, template, context)
             else:
                 template = 'registration/register.html'
-                context = {'form': form, 'timezones': pytz.common_timezones}
+                context = {'form': form}
                 return render(request, template, context)
         else:
             template = 'registration/register.html'
-            context = {'timezones': pytz.common_timezones}
-            return render(request, template, context)
+            return render(request, template, {})
 
 
 def unconfirmed_email(request):

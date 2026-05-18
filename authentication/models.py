@@ -45,18 +45,19 @@ class User(AbstractBaseUser, TimestampedModel):
         max_length=255,
         unique=True,
     )
-    timezone = models.CharField(max_length=64)
+    timezone = models.CharField(max_length=64, blank=True, default='')
     confirmed_email = models.BooleanField(default=False)
-    mail_time = models.IntegerField(default=360)
+    mail_time = models.IntegerField(default=480)
+    onboarded = models.BooleanField(default=False)
     is_public = models.BooleanField(default=True)
-    is_subscribed = models.BooleanField(default=True)
+    is_subscribed = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['timezone']
+    REQUIRED_FIELDS = []
 
     def get_full_name(self):
         # The user is identified by their email address
@@ -86,6 +87,11 @@ class User(AbstractBaseUser, TimestampedModel):
             return None
 
         return datetime.now(user_tz)
+
+    @property
+    def mail_hour(self):
+        """The hour of day (0-23) this user's prompt is sent."""
+        return self.mail_time // 60
 
     @property
     def is_staff(self):
