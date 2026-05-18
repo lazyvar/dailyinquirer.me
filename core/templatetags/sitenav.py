@@ -15,7 +15,7 @@ def build_trail(page, entry=None):
     archived = {'label': 'Archived', 'url': reverse('archived_entries')}
 
     if page == 'dashboard':
-        return [{'label': 'Your writing', 'url': None}]
+        return [{**writing, 'url': None}]
     if page == 'settings':
         return [writing, {'label': 'Settings', 'url': None}]
     if page == 'archived':
