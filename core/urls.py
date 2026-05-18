@@ -14,4 +14,8 @@ urlpatterns = [
     path('unconfirmed_email/', views.unconfirmed_email,
          name='unconfirmed_email'),
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('settings/email/', views.manage_email_change,
+         name='manage_email_change'),
+    path('settings/email/confirm/<uidb64>/<token>/',
+         views.confirm_email_change, name='confirm_email_change'),
 ]

@@ -759,3 +759,38 @@ class EmailChangeModelTests(TestCase):
         user.pending_email = None
         user.save()
         self.assertFalse(email_change_token.check_token(user, token))
+
+
+class EmailChangeViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+
+    def test_request_available_email_sets_pending_and_sends_two_emails(self):
+        self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'new@example.com'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.pending_email, 'new@example.com')
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertEqual(len(mail.outbox), 2)
+        recipients = [m.to[0] for m in mail.outbox]
+        self.assertIn('new@example.com', recipients)
+        self.assertIn('old@example.com', recipients)
+
+    def test_request_taken_email_does_not_set_pending(self):
+        User.objects.create_user(
+            email='taken@example.com', password='mostdope1')
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'taken@example.com'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, 200)
+
+    def test_request_own_email_does_not_set_pending(self):
+        self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'old@example.com'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(len(mail.outbox), 0)

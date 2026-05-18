@@ -9,7 +9,7 @@ from authentication.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from authentication.tokens import account_activation_token
+from authentication.tokens import account_activation_token, email_change_token
 from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +19,7 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 
 from core.models import Entry, Prompt
-from core.forms import ResendConfirmationForm, SettingsForm
+from core.forms import ResendConfirmationForm, SettingsForm, ChangeEmailForm
 from core.utils import mail_newsletter
 
 from datetime import datetime
@@ -259,6 +259,74 @@ def on_incoming_message(request):
         pub_date=timezone.now(),
     )
     return HttpResponse('created', status=201)
+
+
+def send_email_change_emails(request, user):
+    current_site = get_current_site(request)
+    confirm_message = render_to_string(
+        'registration/change_email_confirm.html', {
+            'domain': current_site.domain,
+            'pending_email': user.pending_email,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': email_change_token.make_token(user),
+        })
+    EmailMessage(
+        'Confirm your new Daily Inquirer email',
+        confirm_message,
+        "Beep Boop <beep-boop@dailyinquirer.me>",
+        [user.pending_email],
+    ).send()
+
+    notice_message = render_to_string(
+        'registration/change_email_notice.html', {
+            'pending_email': user.pending_email,
+        })
+    EmailMessage(
+        'Your Daily Inquirer email is being changed',
+        notice_message,
+        "Beep Boop <beep-boop@dailyinquirer.me>",
+        [user.email],
+    ).send()
+
+
+@login_required
+def manage_email_change(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    user = request.user
+    action = request.POST.get('action', 'request')
+    context = {'timezones': pytz.common_timezones}
+
+    form = ChangeEmailForm(request.POST)
+    if not form.is_valid():
+        context['email_change_error'] = 'Enter a valid email address.'
+        context['submitted_email'] = request.POST.get('email', '')
+        return render(request, 'core/settings.html', context)
+
+    new_email = User.objects.normalize_email(form.cleaned_data['email'])
+    if new_email.lower() == user.email.lower():
+        context['email_change_error'] = "That's already your email address."
+        context['submitted_email'] = new_email
+        return render(request, 'core/settings.html', context)
+
+    taken = User.objects.filter(email__iexact=new_email) \
+        .exclude(pk=user.pk).exists()
+    if taken:
+        context['email_change_error'] = 'That email address is already in use.'
+        context['submitted_email'] = new_email
+        return render(request, 'core/settings.html', context)
+
+    user.pending_email = new_email
+    user.save()
+    send_email_change_emails(request, user)
+    context['email_change_requested'] = True
+    return render(request, 'core/settings.html', context)
+
+
+def confirm_email_change(request, uidb64, token):
+    # Stub — full implementation in Task 6
+    return render(request, 'registration/change_email_confirmed.html')
 
 
 def privacy(request):
