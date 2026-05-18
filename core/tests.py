@@ -1193,3 +1193,33 @@ class LoginRedirectTests(TestCase):
             'password': 'mostdope1',
         })
         self.assertRedirects(response, reverse('dash'))
+
+
+class SignedInHomeLinkTests(TestCase):
+    """The wordmark/masthead "The Daily Inquirer" link points at /dash/
+    for signed-in users, and at / for anonymous visitors."""
+
+    def _user(self):
+        user = User.objects.create_user(
+            email='linker@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        return user
+
+    def test_footer_wordmark_links_home_for_anonymous(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(
+            response, '<a class="site-footer__wordmark" href="/">')
+
+    def test_footer_wordmark_links_to_dash_when_signed_in(self):
+        self.client.force_login(self._user())
+        response = self.client.get(reverse('dash'))
+        self.assertContains(
+            response, '<a class="site-footer__wordmark" href="/dash/">')
+
+    def test_masthead_links_to_dash_when_signed_in(self):
+        self.client.force_login(self._user())
+        response = self.client.get(reverse('settings'))
+        self.assertContains(
+            response, '<a href="/dash/">The Daily Inquirer</a>')
