@@ -5,7 +5,14 @@
     font-size: 0.78rem;
 }
 
-/* The bar lives inside a .container so its rule matches the page content width. */
+/* The bar lives inside a .container so its rule matches the page content width.
+   core/base.html loads Bootstrap, which centers .container; auth pages don't, so
+   center it here too — otherwise the capped-width .container hugs the left edge. */
+.site-footer .container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .site-footer__bar {
     display: flex;
     align-items: center;
