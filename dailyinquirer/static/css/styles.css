@@ -1,6 +1,14 @@
 body {
     font-family: 'Elms Sans', system-ui, sans-serif;
     background-color: var(--page);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Content fills the viewport so the footer is pinned to the bottom. */
+.site-main {
+    flex: 1 0 auto;
 }
 
 /* xs */
@@ -65,9 +73,17 @@ p {
     text-decoration: inherit;
 }
 
-.footer-link {
-    margin-left: 4px;
-    margin-right: 4px;
+.about-page {
+    max-width: 640px;
+    margin: 48px auto;
+}
+
+.about-page h1 {
+    margin-bottom: 24px;
+}
+
+.about-page p {
+    line-height: 1.6;
 }
 
 .typewriter {

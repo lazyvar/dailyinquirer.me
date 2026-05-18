@@ -8,6 +8,7 @@ urlpatterns = [
     path('messages/', views.on_incoming_message, name='messages'),
     path('terms/', views.terms, name='terms'),
     path('privacy/', views.privacy, name='privacy'),
+    path('about/', views.about, name='about'),
     path('settings/', views.settings, name='settings'),
     path('resend_confirmation/', views.resend_confirmation,
          name='resend_confirmation'),

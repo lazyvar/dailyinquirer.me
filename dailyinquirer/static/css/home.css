@@ -117,6 +117,12 @@
   border-bottom: 1px solid var(--rule);
 }
 
+/* The last section sits above the footer's own rule — don't double it up. */
+#home .ed-section:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 #home .ed-label {
   font-family: var(--body);
   font-size: 0.68rem;
