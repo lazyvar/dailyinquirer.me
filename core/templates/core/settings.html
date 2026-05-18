@@ -114,9 +114,8 @@
     </div>
 
     <div class="ed-actions">
-      <form action="/password_reset/" method="post">
+      <form action="{% url 'send_password_reset' %}" method="post">
         {% csrf_token %}
-        <input type="hidden" name="email" value="{{ user.email }}">
         <button class="ed-btn-ghost" type="submit">Reset password</button>
       </form>
       <form action="/logout/" method="post">
@@ -124,6 +123,9 @@
         <button class="ed-btn-ghost" type="submit">Log out</button>
       </form>
     </div>
+    {% if password_reset_sent %}
+    <div class="ed-alert ed-alert--ok">Password reset link sent to {{ user.email }}.</div>
+    {% endif %}
     <p class="ed-hint">Reset password sends a link to {{ user.email }}.</p>
   </section>
 </div>

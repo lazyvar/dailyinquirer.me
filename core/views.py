@@ -9,6 +9,7 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from authentication.tokens import account_activation_token, email_change_token
 from django.contrib.auth import login, logout
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -198,6 +199,26 @@ def settings(request):
                 "We couldn't complete the email change — that address "
                 "is no longer available.")
 
+    return render(request, 'core/settings.html', context)
+
+
+@login_required
+def send_password_reset(request):
+    """Email a password-reset link to the signed-in user without leaving
+    the settings page."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    form = PasswordResetForm({'email': request.user.email})
+    if form.is_valid():
+        form.save(
+            request=request,
+            use_https=request.is_secure(),
+            email_template_name='email/password_reset.txt',
+            html_email_template_name='email/password_reset.html',
+            subject_template_name='email/password_reset_subject.txt',
+        )
+    context = {'timezones': pytz.common_timezones, 'hours': HOUR_CHOICES,
+               'password_reset_sent': True}
     return render(request, 'core/settings.html', context)
 
 

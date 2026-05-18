@@ -659,6 +659,18 @@ class SettingsPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ed-alert--ok')
 
+    def test_password_reset_sends_email_and_stays_on_settings(self):
+        response = self.client.post(reverse('send_password_reset'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="settings"')
+        self.assertContains(response, 'Password reset link sent')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.user.email, mail.outbox[0].to)
+
+    def test_password_reset_rejects_get(self):
+        response = self.client.get(reverse('send_password_reset'))
+        self.assertEqual(response.status_code, 405)
+
 
 class DashboardTests(TestCase):
     def setUp(self):
