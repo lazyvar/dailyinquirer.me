@@ -1,0 +1,19 @@
+<header class="ed-sitenav">
+  <nav class="ed-sitenav__tabs" aria-label="Breadcrumb">
+    {% for crumb in crumbs %}
+      {% if crumb.url %}
+      <a class="ed-tab ed-tab--link" href="{{ crumb.url }}">{{ crumb.label }}</a>
+      {% else %}
+      <span class="ed-tab ed-tab--current" aria-current="page">{{ crumb.label }}</span>
+      {% endif %}
+    {% endfor %}
+  </nav>
+  <div class="ed-masthead">
+    <h1 class="ed-masthead__name">
+      <a href="{% if user.is_authenticated %}{% url 'dash' %}{% else %}/{% endif %}">The Daily Inquirer</a>
+    </h1>
+    {% if user.is_authenticated %}
+    <p class="ed-masthead__email"><a href="{% url 'settings' %}">{{ user.email }}</a></p>
+    {% endif %}
+  </div>
+</header>
