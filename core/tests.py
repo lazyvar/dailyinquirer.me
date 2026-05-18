@@ -83,6 +83,18 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'href="/login/"')
 
 
+class AboutPageTests(TestCase):
+    def test_about_page_renders(self):
+        response = self.client.get(reverse('about'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'About The Daily Inquirer')
+
+    def test_about_page_extends_base_layout(self):
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'bootstrap.css')
+        self.assertNotContains(response, 'home.css')
+
+
 class LogoutTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

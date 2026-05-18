@@ -70,6 +70,19 @@ p {
     margin-right: 4px;
 }
 
+.about-page {
+    max-width: 640px;
+    margin: 48px auto;
+}
+
+.about-page h1 {
+    margin-bottom: 24px;
+}
+
+.about-page p {
+    line-height: 1.6;
+}
+
 .typewriter {
 	font-family: 'Special Elite', sans-serif;
 }
