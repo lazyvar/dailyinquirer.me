@@ -74,7 +74,7 @@
   background: var(--accent);
   color: #fff;
   font-family: var(--body);
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -94,7 +94,7 @@
 
 #home .ed-signin {
   font-family: var(--body);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   color: var(--ink-faint);
   margin: 0;
   text-align: left;
@@ -182,7 +182,7 @@
 
 #home .ed-step p {
   font-family: var(--body);
-  font-size: 0.78rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--ink-soft);
   margin: 0;
@@ -199,7 +199,7 @@
 
 #home .ed-about__text p {
   font-family: var(--body);
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.72;
   color: var(--ink-soft);
   margin: 0 0 0.85em;
@@ -271,7 +271,7 @@
 
 #home .ed-text {
   font-family: var(--body);
-  font-size: 0.8rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--ink-soft);
   margin: 0;
