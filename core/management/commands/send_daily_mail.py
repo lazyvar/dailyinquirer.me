@@ -13,7 +13,7 @@ class Command(BaseCommand):
         for user in User.objects.filter(confirmed_email=True,
                                         is_subscribed=True):
             local_time = user.local_time()
-            if local_time is None or local_time.hour < 8:
+            if local_time is None or local_time.hour < user.mail_hour:
                 continue
             try:
                 send_prompt_to_user(user)

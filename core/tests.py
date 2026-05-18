@@ -861,3 +861,41 @@ class SignupWithoutTimezoneTests(TestCase):
     def test_register_page_has_no_timezone_field(self):
         response = self.client.get(reverse('register'))
         self.assertNotContains(response, 'name="timezone"')
+
+
+class SendDailyMailUsesMailHourTests(TestCase):
+    def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
+
+    def _make_user(self, email, mail_time):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.timezone = 'UTC'
+        user.confirmed_email = True
+        user.onboarded = True
+        user.is_subscribed = True
+        user.mail_time = mail_time
+        user.save()
+        return user
+
+    @patch.object(User, 'local_time')
+    def test_skips_user_before_their_chosen_hour(self, mock_local_time):
+        self._make_user('late@example.com', mail_time=600)  # 10:00
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
+
+    @patch.object(User, 'local_time')
+    def test_sends_at_the_user_chosen_hour(self, mock_local_time):
+        user = self._make_user('late@example.com', mail_time=600)  # 10:00
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=10)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
