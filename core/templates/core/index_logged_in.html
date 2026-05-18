@@ -9,6 +9,8 @@
 <div class="app" id="dashboard">
   {% include "core/_masthead.html" with tab="Your writing" %}
 
+  {% include "core/_messages.html" %}
+
   <form class="ed-filters" method="get" action="/dash/">
     <div class="ed-search-row">
       <input class="ed-search" type="text" name="q" value="{{ q }}"
@@ -49,18 +51,17 @@
     </details>
   </form>
 
+  {% if archived_count %}
+  <p class="ed-archived-link"><a href="{% url 'archived_entries' %}">View archived ({{ archived_count }})</a></p>
+  {% endif %}
+
   {% if filters_active %}
   <p class="ed-count">Showing <b>{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}</b> of <b>{{ total_count }}</b> entries</p>
   {% endif %}
 
   {% if entries %}
     {% for entry in entries %}
-    <article class="ed-card ed-entry">
-      {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
-      <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
-      <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
-      <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
-    </article>
+      {% include "core/_entry_card.html" with entry=entry %}
     {% endfor %}
 
     {% if page_obj.paginator.num_pages > 1 %}

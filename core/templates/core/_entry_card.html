@@ -1,0 +1,28 @@
+{% load entry_extras %}
+{% if archived %}
+<article class="ed-card ed-entry ed-entry--archived">
+  <a class="ed-entry__link" href="{% url 'entry_detail' entry.pk %}">
+    {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
+    <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
+    <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
+    <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
+  </a>
+  <div class="ed-entry__actions">
+    <form method="post" action="{% url 'entry_detail' entry.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="restore">
+      <button class="ed-btn-ghost" type="submit">Restore</button>
+    </form>
+    <a class="ed-btn-ghost ed-btn-ghost--danger" href="{% url 'entry_detail' entry.pk %}?confirm_delete=1">Delete</a>
+  </div>
+</article>
+{% else %}
+<a class="ed-entry-link" href="{% url 'entry_detail' entry.pk %}">
+  <article class="ed-card ed-entry">
+    {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
+    <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
+    <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
+    <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
+  </article>
+</a>
+{% endif %}

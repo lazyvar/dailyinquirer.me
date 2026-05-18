@@ -1235,6 +1235,240 @@ class SendDailyMailUsesMailHourTests(TestCase):
         self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
 
 
+class EntryModelTests(TestCase):
+    def test_entry_archived_at_defaults_to_none(self):
+        user = User.objects.create_user(
+            email='model@example.com', password='mostdope1')
+        prompt = Prompt.objects.create(
+            question='Q', mail_day=timezone.now())
+        entry = Entry.objects.create(
+            content='hi', author=user, prompt=prompt,
+            pub_date=timezone.now())
+        self.assertIsNone(entry.archived_at)
+
+
+class EntryEditFormTests(TestCase):
+    def test_blank_content_is_invalid(self):
+        from core.forms import EntryEditForm
+        self.assertFalse(EntryEditForm({'content': '   '}).is_valid())
+
+    def test_real_content_is_valid(self):
+        from core.forms import EntryEditForm
+        self.assertTrue(EntryEditForm({'content': 'real words'}).is_valid())
+
+
+class EntryDetailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you notice today?',
+            category='Reflective', mail_day=timezone.now())
+        self.entry = Entry.objects.create(
+            content='I noticed the light.', author=self.user,
+            prompt=self.prompt,
+            pub_date=timezone.make_aware(datetime(2026, 1, 15, 12, 0)))
+
+    def test_detail_renders_for_author(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="entry"')
+        self.assertContains(response, 'What did you notice today?')
+        self.assertContains(response, 'I noticed the light.')
+
+    def test_detail_404_for_non_owner(self):
+        other = User.objects.create_user(
+            email='other@example.com', password='mostdope1')
+        self.client.force_login(other)
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_redirects_anonymous_to_login(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.url)
+
+    def test_edit_mode_shows_prefilled_textarea(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]), {'edit': '1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ed-detail__textarea')
+        self.assertContains(response, 'I noticed the light.')
+
+    def test_save_updates_content_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': 'Revised words.'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertEqual(self.entry.content, 'Revised words.')
+        self.assertContains(response, 'Your entry was updated.')
+
+    def test_save_bumps_updated_at(self):
+        original = self.entry.updated_at
+        self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': 'Different words.'})
+        self.entry.refresh_from_db()
+        self.assertGreater(self.entry.updated_at, original)
+
+    def test_save_rejects_blank_content(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': '   '})
+        self.entry.refresh_from_db()
+        self.assertEqual(self.entry.content, 'I noticed the light.')
+        self.assertContains(response, 'ed-alert--error')
+
+    def test_archive_sets_archived_at_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'archive'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertIsNotNone(self.entry.archived_at)
+        self.assertContains(response, 'Entry archived.')
+
+    def test_restore_clears_archived_at_and_shows_message(self):
+        self.entry.archived_at = timezone.now()
+        self.entry.save()
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'restore'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertIsNone(self.entry.archived_at)
+        self.assertContains(response, 'Entry restored.')
+
+    def test_archived_entry_menu_shows_restore(self):
+        self.entry.archived_at = timezone.now()
+        self.entry.save()
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertContains(response, 'value="restore"')
+        self.assertNotContains(response, 'value="archive"')
+
+    def test_unknown_action_is_bad_request(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'frobnicate'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_confirm_delete_mode_shows_confirmation_panel(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'confirm_delete': '1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ed-confirm')
+        self.assertContains(response, 'Delete this entry?')
+
+    def test_delete_removes_entry_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'delete'}, follow=True)
+        self.assertFalse(Entry.objects.filter(pk=self.entry.pk).exists())
+        self.assertContains(response, 'Entry deleted.')
+
+    def test_view_mode_does_not_show_confirmation_panel(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertNotContains(response, 'Delete this entry?')
+
+    def test_non_owner_post_action_is_rejected(self):
+        other = User.objects.create_user(
+            email='intruder@example.com', password='mostdope1')
+        self.client.force_login(other)
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'delete'})
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Entry.objects.filter(pk=self.entry.pk).exists())
+
+
+class ArchivedEntriesTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='archiver@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def _entry(self, content='words', archived=False):
+        prompt = Prompt.objects.create(
+            question='Q', category='Reflective', mail_day=timezone.now())
+        return Entry.objects.create(
+            content=content, author=self.user, prompt=prompt,
+            pub_date=timezone.now(),
+            archived_at=timezone.now() if archived else None)
+
+    def test_archived_page_lists_only_archived_entries(self):
+        self._entry(content='archived one', archived=True)
+        self._entry(content='active one', archived=False)
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'archived one')
+        self.assertNotContains(response, 'active one')
+
+    def test_archived_page_shows_empty_state(self):
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nothing archived.')
+
+    def test_archived_page_redirects_anonymous(self):
+        self.client.logout()
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.url)
+
+
+class DashboardArchiveIntegrationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='dashuser@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def _entry(self, content='words', archived=False):
+        prompt = Prompt.objects.create(
+            question='Q', category='Reflective', mail_day=timezone.now())
+        return Entry.objects.create(
+            content=content, author=self.user, prompt=prompt,
+            pub_date=timezone.now(),
+            archived_at=timezone.now() if archived else None)
+
+    def test_dashboard_excludes_archived_entries(self):
+        self._entry(content='visible entry', archived=False)
+        self._entry(content='hidden entry', archived=True)
+        response = self.client.get(reverse('dash'))
+        self.assertContains(response, 'visible entry')
+        self.assertNotContains(response, 'hidden entry')
+
+    def test_dashboard_entry_links_to_detail(self):
+        entry = self._entry(content='clickable entry')
+        response = self.client.get(reverse('dash'))
+        self.assertContains(
+            response, reverse('entry_detail', args=[entry.pk]))
+
+    def test_dashboard_shows_archived_link_when_archived_exist(self):
+        self._entry(content='hidden entry', archived=True)
+        response = self.client.get(reverse('dash'))
+        self.assertContains(response, reverse('archived_entries'))
+        self.assertContains(response, 'ed-archived-link')
+
+    def test_dashboard_hides_archived_link_when_none_archived(self):
+        self._entry(content='visible entry', archived=False)
+        response = self.client.get(reverse('dash'))
+        self.assertNotContains(response, 'ed-archived-link')
+
+
 class EmailChangeEmailTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
