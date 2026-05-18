@@ -7,3 +7,11 @@ class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
 
 
 account_activation_token = AccountActivationTokenGenerator()
+
+
+class EmailChangeTokenGenerator(PasswordResetTokenGenerator):
+    def _make_hash_value(self, user, timestamp):
+        return f"{user.pk}{timestamp}{user.email}{user.pending_email}"
+
+
+email_change_token = EmailChangeTokenGenerator()

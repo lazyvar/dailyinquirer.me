@@ -13,7 +13,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from authentication.models import User
-from authentication.tokens import account_activation_token
+from authentication.tokens import account_activation_token, email_change_token
 
 from core.models import Entry, Prompt, PromptSend
 from core.templatetags.entry_extras import unwrap
@@ -740,3 +740,22 @@ class EmailChangeModelTests(TestCase):
         user = User.objects.create_user(
             email='m@example.com', password='mostdope1')
         self.assertIsNone(user.pending_email)
+
+    def test_email_change_token_validates_for_pending_user(self):
+        user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        user.pending_email = 'new@example.com'
+        user.save()
+        token = email_change_token.make_token(user)
+        self.assertTrue(email_change_token.check_token(user, token))
+
+    def test_email_change_token_invalid_after_swap(self):
+        user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        user.pending_email = 'new@example.com'
+        user.save()
+        token = email_change_token.make_token(user)
+        user.email = 'new@example.com'
+        user.pending_email = None
+        user.save()
+        self.assertFalse(email_change_token.check_token(user, token))
