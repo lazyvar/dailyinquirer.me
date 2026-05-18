@@ -71,7 +71,16 @@ class HomePageTests(TestCase):
 
     def test_home_highlights_todays_prompt(self):
         response = self.client.get(reverse('index'))
-        self.assertContains(response, 'is-today', count=1)
+        # Exactly one prompt card carries the server-rendered highlight.
+        self.assertContains(response, 'ed-prompt-card is-today', count=1)
+
+    def test_home_highlights_day_with_local_time_js(self):
+        response = self.client.get(reverse('index'))
+        # Every prompt card carries its JS weekday number, and a script
+        # re-highlights the card for the visitor's local time zone.
+        for weekday in range(7):
+            self.assertContains(response, 'data-weekday="%d"' % weekday)
+        self.assertContains(response, 'new Date().getDay()')
 
     def test_other_pages_do_not_load_home_css(self):
         response = self.client.get(reverse('terms'))
