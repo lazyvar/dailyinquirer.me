@@ -12,6 +12,7 @@
     <link href="/static/css/fonts.css" rel="stylesheet">
     <link href="/static/css/tokens.css" rel="stylesheet">
     <link href="/static/css/auth.css" rel="stylesheet">
+    <link href="/static/css/footer.css" rel="stylesheet">
 </head>
 
 <body class="auth-page">
@@ -21,9 +22,7 @@
             {% block card %}{% endblock %}
         </div>
     </main>
-    <footer class="auth-footer">
-        <p><a href="/terms/">Terms</a><a href="/privacy/">Privacy</a></p>
-    </footer>
+    {% include "core/_footer.html" %}
 </body>
 
 </html>
