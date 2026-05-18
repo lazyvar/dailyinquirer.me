@@ -1,4 +1,6 @@
-from django.test import TestCase, override_settings
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
@@ -72,3 +74,36 @@ class UserOnboardingFieldsTests(TestCase):
             email='hour@example.com', password='mostdope1')
         user.mail_time = 540
         self.assertEqual(user.mail_hour, 9)
+
+
+class OnboardExistingUsersMigrationTests(TransactionTestCase):
+    """0007 marks pre-existing users onboarded and bumps their send time."""
+
+    def test_existing_users_are_marked_onboarded(self):
+        app = 'authentication'
+        migrate_from = [(app, '0006_onboarding_fields')]
+        migrate_to = [(app, '0007_onboard_existing_users')]
+
+        # Roll the test database back to just before the data migration.
+        executor = MigrationExecutor(connection)
+        executor.migrate(migrate_from)
+        old_apps = executor.loader.project_state(migrate_from).apps
+
+        OldUser = old_apps.get_model(app, 'User')
+        OldUser.objects.create(
+            email='existing@example.com', password='x',
+            timezone='UTC', onboarded=False, mail_time=360)
+
+        # Apply the data migration.
+        executor = MigrationExecutor(connection)
+        executor.migrate(migrate_to)
+        new_apps = executor.loader.project_state(migrate_to).apps
+
+        NewUser = new_apps.get_model(app, 'User')
+        user = NewUser.objects.get(email='existing@example.com')
+        self.assertTrue(user.onboarded)
+        self.assertEqual(user.mail_time, 480)
+
+        # Leave the test database fully migrated for any later tests.
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
