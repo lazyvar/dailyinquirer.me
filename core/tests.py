@@ -1262,3 +1262,23 @@ class EntryDetailTests(TestCase):
             reverse('entry_detail', args=[self.entry.pk]),
             {'action': 'frobnicate'})
         self.assertEqual(response.status_code, 400)
+
+    def test_confirm_delete_mode_shows_confirmation_panel(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'confirm_delete': '1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ed-confirm')
+        self.assertContains(response, 'Delete this entry?')
+
+    def test_delete_removes_entry_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'delete'}, follow=True)
+        self.assertFalse(Entry.objects.filter(pk=self.entry.pk).exists())
+        self.assertContains(response, 'Entry deleted.')
+
+    def test_view_mode_does_not_show_confirmation_panel(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertNotContains(response, 'Delete this entry?')
