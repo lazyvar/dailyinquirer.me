@@ -50,7 +50,7 @@ class User(AbstractBaseUser, TimestampedModel):
     mail_time = models.IntegerField(default=480)
     onboarded = models.BooleanField(default=False)
     is_public = models.BooleanField(default=True)
-    is_subscribed = models.BooleanField(default=True)
+    is_subscribed = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 

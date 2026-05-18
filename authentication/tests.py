@@ -75,6 +75,12 @@ class UserOnboardingFieldsTests(TestCase):
         user.mail_time = 540
         self.assertEqual(user.mail_hour, 9)
 
+    def test_new_user_is_not_subscribed_by_default(self):
+        """A new user is unsubscribed until they opt in during onboarding."""
+        user = User.objects.create_user(
+            email='unsubbed@example.com', password='mostdope1')
+        self.assertFalse(user.is_subscribed)
+
 
 class OnboardExistingUsersMigrationTests(TransactionTestCase):
     """0007 marks pre-existing users onboarded and bumps their send time."""
