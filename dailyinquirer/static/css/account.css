@@ -324,6 +324,10 @@
   color: var(--ink-faint);
 }
 
+#onboarding .ed-actions {
+  margin-top: 20px;
+}
+
 /* --- Dashboard: filter bar ---------------------------------- */
 
 #dashboard .ed-filters {
