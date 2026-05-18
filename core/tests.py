@@ -45,7 +45,7 @@ class EmailConfirmationTests(TestCase):
 
         user.refresh_from_db()
         self.assertTrue(user.confirmed_email)
-        # A freshly-confirmed user has not onboarded yet, so the index
+        # A freshly-confirmed user has not onboarded yet, so the /dash/
         # redirect is itself gated onward to the onboarding page.
         self.assertRedirects(response, reverse('onboarding'))
 
@@ -976,7 +976,7 @@ class OnboardingPageTests(TestCase):
             'timezone': 'America/New_York',
             'mail_hour': '9',
         })
-        self.assertRedirects(response, reverse('index'))
+        self.assertRedirects(response, reverse('dash'))
         self.user.refresh_from_db()
         self.assertTrue(self.user.onboarded)
         self.assertTrue(self.user.is_subscribed)
@@ -990,11 +990,11 @@ class OnboardingPageTests(TestCase):
         self.assertTrue(self.user.onboarded)
         self.assertFalse(self.user.is_subscribed)
 
-    def test_already_onboarded_user_is_redirected_to_index(self):
+    def test_already_onboarded_user_is_redirected_to_dashboard(self):
         self.user.onboarded = True
         self.user.save()
         response = self.client.get(reverse('onboarding'))
-        self.assertRedirects(response, reverse('index'))
+        self.assertRedirects(response, reverse('dash'))
 
     def test_page_autodetects_timezone_with_js(self):
         response = self.client.get(reverse('onboarding'))
@@ -1164,3 +1164,17 @@ class DashboardRouteTests(TestCase):
         self.client.force_login(self._make_user(confirmed=False))
         response = self.client.get(reverse('dash'))
         self.assertRedirects(response, reverse('unconfirmed_email'))
+
+
+class LoginRedirectTests(TestCase):
+    def test_login_sends_user_to_dashboard(self):
+        user = User.objects.create_user(
+            email='loginer@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        response = self.client.post(reverse('login'), {
+            'username': 'loginer@example.com',
+            'password': 'mostdope1',
+        })
+        self.assertRedirects(response, reverse('dash'))

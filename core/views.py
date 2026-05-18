@@ -150,7 +150,7 @@ def settings(request):
 @login_required
 def onboarding(request):
     if request.user.onboarded:
-        return redirect('index')
+        return redirect('dash')
 
     if request.method == 'POST':
         form = OnboardingForm(request.POST)
@@ -161,7 +161,7 @@ def onboarding(request):
             user.mail_time = int(form.cleaned_data['mail_hour']) * 60
             user.onboarded = True
             user.save()
-            return redirect('index')
+            return redirect('dash')
         context = {'form': form, 'timezones': pytz.common_timezones,
                    'hours': HOUR_CHOICES}
         return render(request, 'core/onboarding.html', context)
@@ -172,7 +172,7 @@ def onboarding(request):
 
 def register(request):
     if request.user.is_authenticated:
-        return redirect('index')
+        return redirect('dash')
     else:
         if request.method == 'POST':
             form = UserCreationForm(request.POST)
@@ -251,7 +251,7 @@ def activate(request, uidb64, token):
         except:
             pass
 
-        return redirect('index')
+        return redirect('dash')
     else:
         return HttpResponse('Activation link is invalid!')
 

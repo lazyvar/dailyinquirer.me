@@ -102,7 +102,7 @@ AUTH_USER_MODEL = 'authentication.User'
 
 LOGIN_URL ='/login/'
 
-LOGIN_REDIRECT_URL = 'index'
+LOGIN_REDIRECT_URL = 'dash'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
