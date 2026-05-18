@@ -861,3 +861,27 @@ class EmailChangeViewTests(TestCase):
         self.assertEqual(self.user.email, 'old@example.com')
         self.assertIsNone(self.user.pending_email)
         self.assertContains(response, 'unavailable')
+
+    def test_settings_shows_email_with_edit_affordance(self):
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'old@example.com')
+        self.assertContains(response, 'ed-email-edit')
+
+    def test_settings_shows_pending_banner(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'ed-pending')
+        self.assertContains(response, 'new@example.com')
+
+    def test_request_taken_email_renders_error_alert(self):
+        User.objects.create_user(
+            email='taken@example.com', password='mostdope1')
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'taken@example.com'})
+        self.assertContains(response, 'already in use')
+
+    def test_request_available_email_renders_pending_alert(self):
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'new@example.com'})
+        self.assertContains(response, 'pending')
