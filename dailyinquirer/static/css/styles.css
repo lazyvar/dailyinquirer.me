@@ -65,11 +65,6 @@ p {
     text-decoration: inherit;
 }
 
-.footer-link {
-    margin-left: 4px;
-    margin-right: 4px;
-}
-
 .about-page {
     max-width: 640px;
     margin: 48px auto;

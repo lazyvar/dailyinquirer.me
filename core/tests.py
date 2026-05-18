@@ -95,6 +95,19 @@ class AboutPageTests(TestCase):
         self.assertNotContains(response, 'home.css')
 
 
+class FooterTests(TestCase):
+    def test_public_pages_render_shared_footer(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'footer.css')
+        self.assertContains(response, 'site-footer')
+        self.assertContains(response, 'href="/about/"')
+        self.assertContains(response, 'mailto:hello@dailyinquirer.me')
+
+    def test_old_footer_link_class_is_gone(self):
+        response = self.client.get(reverse('index'))
+        self.assertNotContains(response, 'footer-link')
+
+
 class LogoutTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
