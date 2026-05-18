@@ -10,3 +10,5 @@ DEBUG = True
 INSTALLED_APPS.append('django_mail_viewer')
 
 EMAIL_BACKEND = 'django_mail_viewer.backends.locmem.EmailBackend'
+
+SITE_URL = 'http://localhost:8000'
