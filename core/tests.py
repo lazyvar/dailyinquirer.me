@@ -1178,3 +1178,21 @@ class EmailChangeEmailTests(TestCase):
             self.assertIn('The Daily Inquirer', html['text/html'])
         recipients = sorted(m.to[0] for m in mail.outbox)
         self.assertEqual(recipients, ['new@example.com', 'owner@example.com'])
+
+
+class PasswordResetEmailTests(TestCase):
+    def test_password_reset_sends_html_email(self):
+        User.objects.create_user(
+            email='reset@example.com', password='mostdope1')
+        response = self.client.post(reverse('password_reset'), {
+            'email': 'reset@example.com',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        self.assertIn('text/html', html)
+        self.assertIn('The Daily Inquirer', html['text/html'])
+        self.assertIn('Reset my password', html['text/html'])
+        self.assertEqual(message.subject,
+                         'Reset your Daily Inquirer password')
