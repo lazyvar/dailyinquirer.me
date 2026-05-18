@@ -54,7 +54,7 @@
 
 .app .ed-masthead__email {
   font-family: var(--body);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--ink-soft);
   margin: 8px 0 0;
 }
@@ -104,7 +104,7 @@
 
 .app .ed-card__sub {
   font-family: var(--body);
-  font-size: 0.82rem;
+  font-size: 1rem;
   line-height: 1.55;
   color: var(--ink-soft);
   margin: 0 0 18px;
@@ -118,7 +118,7 @@
   background: var(--accent);
   color: #fff;
   font-family: var(--body);
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -143,7 +143,7 @@
   background: #fff;
   color: var(--ink);
   font-family: var(--body);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
   border: 1px solid var(--rule);
@@ -186,7 +186,7 @@
   border-radius: 6px;
   padding: 9px 11px;
   font-family: var(--body);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--ink);
   background: #fff;
 }
@@ -201,7 +201,7 @@
   gap: 9px;
   align-items: flex-start;
   font-family: var(--body);
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1.4;
   color: var(--ink);
 }
@@ -216,7 +216,7 @@
 
 .app .ed-hint {
   font-family: var(--body);
-  font-size: 0.74rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: var(--ink-faint);
   margin: 8px 0 0;
@@ -236,7 +236,7 @@
 
 .app .ed-alert {
   font-family: var(--body);
-  font-size: 0.83rem;
+  font-size: 0.875rem;
   font-weight: 600;
   border-radius: 6px;
   padding: 11px 14px;
@@ -320,7 +320,7 @@
 
 #onboarding .ed-timeopt__time {
   font-family: var(--body);
-  font-size: 0.7rem;
+  font-size: 0.875rem;
   color: var(--ink-faint);
 }
 
@@ -346,7 +346,7 @@
   border-radius: 6px;
   padding: 10px 12px;
   font-family: var(--body);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--ink);
   background: #fff;
 }
@@ -409,7 +409,7 @@
 #dashboard .ed-filter-clear {
   align-self: center;
   font-family: var(--body);
-  font-size: 0.76rem;
+  font-size: 0.875rem;
   color: var(--ink-soft);
   text-decoration: underline;
 }
@@ -420,7 +420,7 @@
 
 #dashboard .ed-count {
   font-family: var(--body);
-  font-size: 0.74rem;
+  font-size: 0.875rem;
   color: var(--ink-faint);
   margin: 20px 0 0;
 }
@@ -457,14 +457,14 @@
 
 #dashboard .ed-entry__date {
   font-family: var(--body);
-  font-size: 0.72rem;
+  font-size: 0.875rem;
   color: var(--ink-faint);
   margin: 0 0 10px;
 }
 
 #dashboard .ed-entry__body {
   font-family: var(--body);
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--ink-soft);
 }
@@ -494,7 +494,7 @@
   text-align: center;
   padding: 7px 10px;
   font-family: var(--body);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   color: var(--ink-soft);
   text-decoration: none;
   border: 1px solid var(--rule);
@@ -541,7 +541,7 @@
 
 .app .ed-empty p {
   font-family: var(--body);
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--ink-soft);
   margin: 0;
 }
@@ -610,7 +610,7 @@
 }
 
 .app .ed-email-edit__action {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--ink-soft);
   text-decoration: underline;
 }
