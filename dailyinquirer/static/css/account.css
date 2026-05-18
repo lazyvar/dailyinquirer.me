@@ -563,7 +563,7 @@
 
 .app .ed-pending {
   border: 1px dashed var(--rule);
-  background: var(--page);
+  background: rgba(var(--accent-rgb), 0.05);
   border-radius: 6px;
   padding: 12px;
   margin-top: 4px;
@@ -575,6 +575,7 @@
 
 .app .ed-pending__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
