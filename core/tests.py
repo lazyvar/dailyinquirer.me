@@ -1319,3 +1319,45 @@ class ArchivedEntriesTests(TestCase):
         response = self.client.get(reverse('archived_entries'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login', response.url)
+
+
+class DashboardArchiveIntegrationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='dashuser@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def _entry(self, content='words', archived=False):
+        prompt = Prompt.objects.create(
+            question='Q', category='Reflective', mail_day=timezone.now())
+        return Entry.objects.create(
+            content=content, author=self.user, prompt=prompt,
+            pub_date=timezone.now(),
+            archived_at=timezone.now() if archived else None)
+
+    def test_dashboard_excludes_archived_entries(self):
+        self._entry(content='visible entry', archived=False)
+        self._entry(content='hidden entry', archived=True)
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'visible entry')
+        self.assertNotContains(response, 'hidden entry')
+
+    def test_dashboard_entry_links_to_detail(self):
+        entry = self._entry(content='clickable entry')
+        response = self.client.get(reverse('index'))
+        self.assertContains(
+            response, reverse('entry_detail', args=[entry.pk]))
+
+    def test_dashboard_shows_archived_link_when_archived_exist(self):
+        self._entry(content='hidden entry', archived=True)
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, reverse('archived_entries'))
+        self.assertContains(response, 'ed-archived-link')
+
+    def test_dashboard_hides_archived_link_when_none_archived(self):
+        self._entry(content='visible entry', archived=False)
+        response = self.client.get(reverse('index'))
+        self.assertNotContains(response, 'ed-archived-link')

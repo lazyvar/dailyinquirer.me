@@ -46,7 +46,9 @@ def index(request):
 
 
 def _dashboard(request):
-    entries = Entry.objects.filter(author=request.user).select_related('prompt')
+    entries = Entry.objects.filter(
+        author=request.user,
+        archived_at__isnull=True).select_related('prompt')
 
     q = request.GET.get('q', '').strip()
     date_from = request.GET.get('from', '').strip()
@@ -91,6 +93,9 @@ def _dashboard(request):
             del params[key]
     querystring = params.urlencode()
 
+    archived_count = Entry.objects.filter(
+        author=request.user, archived_at__isnull=False).count()
+
     context = {
         'entries': page_obj.object_list,
         'page_obj': page_obj,
@@ -103,6 +108,7 @@ def _dashboard(request):
         'date_to': date_to,
         'category': category,
         'sort': sort,
+        'archived_count': archived_count,
     }
     return render(request, 'core/index_logged_in.html', context)
 
