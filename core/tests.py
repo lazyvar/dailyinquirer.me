@@ -42,11 +42,13 @@ class EmailConfirmationTests(TestCase):
             'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': account_activation_token.make_token(user),
         })
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
 
         user.refresh_from_db()
         self.assertTrue(user.confirmed_email)
-        self.assertRedirects(response, reverse('index'))
+        # A freshly-confirmed user has not onboarded yet, so the index
+        # redirect is itself gated onward to the onboarding page.
+        self.assertRedirects(response, reverse('onboarding'))
 
 
 class HomePageTests(TestCase):
@@ -88,6 +90,7 @@ class LogoutTests(TestCase):
         self.user = User.objects.create_user(
             email='member@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
 
     def test_settings_page_logout_control_uses_post(self):
@@ -521,6 +524,7 @@ class SettingsPageTests(TestCase):
         self.user = User.objects.create_user(
             email='writer@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
         self.client.force_login(self.user)
 
@@ -547,6 +551,7 @@ class DashboardTests(TestCase):
         self.user = User.objects.create_user(
             email='writer@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
         self.client.force_login(self.user)
 
@@ -685,6 +690,7 @@ class EntryContentUnwrapTests(TestCase):
         user = User.objects.create_user(email='wrap@example.com', password='mostdope1')
         user.timezone = 'UTC'
         user.confirmed_email = True
+        user.onboarded = True
         user.save()
         prompt = Prompt.objects.create(question='Tell a story.', mail_day=timezone.now())
         Entry.objects.create(
@@ -779,3 +785,37 @@ class OnboardingPageTests(TestCase):
     def test_page_autodetects_timezone_with_js(self):
         response = self.client.get(reverse('onboarding'))
         self.assertContains(response, 'resolvedOptions().timeZone')
+
+
+class OnboardingGateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='gated@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+
+    def test_not_onboarded_user_is_redirected_to_onboarding(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertRedirects(response, reverse('onboarding'))
+
+    def test_onboarded_user_reaches_the_page(self):
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_onboarding_page_itself_is_not_redirected(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('onboarding'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_logout_path_is_not_redirected(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('logout'))
+        self.assertRedirects(response, reverse('index'))
+
+    def test_anonymous_user_is_not_redirected(self):
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
