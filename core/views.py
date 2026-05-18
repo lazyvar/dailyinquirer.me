@@ -115,16 +115,19 @@ def settings(request):
             user = request.user
             user.is_subscribed = form.cleaned_data['subscribed']
             user.timezone = form.cleaned_data['timezone']
+            user.mail_time = int(form.cleaned_data['mail_hour']) * 60
             user.save()
 
-            context = {'success': True, 'timezones': pytz.common_timezones}
+            context = {'success': True, 'timezones': pytz.common_timezones,
+                       'hours': HOUR_CHOICES}
             return render(request, 'core/settings.html', context)
         else:
             template = 'core/settings.html'
-            context = {'form': form, 'timezones': pytz.common_timezones}
+            context = {'form': form, 'timezones': pytz.common_timezones,
+                       'hours': HOUR_CHOICES}
             return render(request, template, context)
     else:
-        context = {'timezones': pytz.common_timezones}
+        context = {'timezones': pytz.common_timezones, 'hours': HOUR_CHOICES}
 
     return render(request, 'core/settings.html', context)
 

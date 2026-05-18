@@ -541,7 +541,8 @@ class SettingsPageTests(TestCase):
 
     def test_settings_update_shows_success_alert(self):
         response = self.client.post(reverse('settings'), {
-            'subscribed': 'on', 'timezone': 'America/New_York'})
+            'subscribed': 'on', 'timezone': 'America/New_York',
+            'mail_hour': '8'})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ed-alert--ok')
 
@@ -819,3 +820,27 @@ class OnboardingGateTests(TestCase):
     def test_anonymous_user_is_not_redirected(self):
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
+
+
+class SettingsSendTimeTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='clock@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_settings_page_shows_delivery_time_selector(self):
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'name="mail_hour"')
+
+    def test_post_updates_mail_time(self):
+        response = self.client.post(reverse('settings'), {
+            'subscribed': 'on',
+            'timezone': 'UTC',
+            'mail_hour': '7',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.mail_time, 420)

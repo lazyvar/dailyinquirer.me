@@ -23,3 +23,4 @@ class OnboardingForm(forms.Form):
 class SettingsForm(forms.Form):
     subscribed = forms.BooleanField(required=False, initial=False)
     timezone = forms.CharField(max_length=64)
+    mail_hour = forms.ChoiceField(choices=HOUR_CHOICES)
