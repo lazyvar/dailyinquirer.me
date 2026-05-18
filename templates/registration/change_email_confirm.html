@@ -1,0 +1,11 @@
+{% autoescape off %}
+Hi,
+
+You asked to change your Daily Inquirer email address to {{ pending_email }}.
+
+Click the link below to confirm the change:
+
+http://{{ domain }}{% url 'confirm_email_change' uidb64=uid token=token %}
+
+If you didn't request this, you can ignore this email — nothing will change.
+{% endautoescape %}

@@ -1,0 +1,10 @@
+{% extends "registration/auth_base.html" %}
+{% block card %}
+{% if taken %}
+<h1 class="auth-title">Address unavailable</h1>
+<p class="auth-subtitle">We couldn't change your email to {{ new_email }} — that address was claimed by another account before you confirmed. Your account email is unchanged. <a href="/settings/" class="auth-link">Back to settings</a>.</p>
+{% else %}
+<h1 class="auth-title">Email address updated</h1>
+<p class="auth-subtitle">Your Daily Inquirer email address is now {{ new_email }}. <a href="/login/" class="auth-link">Log in</a> to continue.</p>
+{% endif %}
+{% endblock %}
