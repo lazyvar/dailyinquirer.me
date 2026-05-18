@@ -1,0 +1,94 @@
+{% extends "core/base.html" %}
+{% load entry_extras %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="entry">
+  <a class="ed-detail-back" href="{% url 'index' %}">
+    <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#chevron-left"></use></svg>
+    Your writing
+  </a>
+
+  {% include "core/_messages.html" %}
+
+  <article class="ed-card ed-detail">
+    {% if mode == 'view' %}
+    <details class="ed-menu">
+      <summary class="ed-menu__btn" aria-label="Entry actions">
+        <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#more-vertical"></use></svg>
+      </summary>
+      <div class="ed-menu__list">
+        <a class="ed-menu__item" href="?edit=1">
+          <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#edit-2"></use></svg>
+          Edit entry
+        </a>
+        {% if entry.archived_at %}
+        <form class="ed-menu__form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="restore">
+          <button class="ed-menu__item" type="submit">
+            <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#rotate-ccw"></use></svg>
+            Restore
+          </button>
+        </form>
+        {% else %}
+        <form class="ed-menu__form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="archive">
+          <button class="ed-menu__item" type="submit">
+            <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#archive"></use></svg>
+            Archive
+          </button>
+        </form>
+        {% endif %}
+        <a class="ed-menu__item ed-menu__item--danger" href="?confirm_delete=1">
+          <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#trash-2"></use></svg>
+          Delete
+        </a>
+      </div>
+    </details>
+    {% endif %}
+
+    {% if entry.prompt.category %}<p class="ed-detail__cat">{{ entry.prompt.category }}</p>{% endif %}
+    <h1 class="ed-detail__q">{{ entry.prompt.question }}</h1>
+    <p class="ed-detail__meta">
+      Added <b>{{ entry.pub_date|date:"M d, Y" }}</b>
+      &middot; Last updated <b>{{ entry.updated_at|date:"M d, Y" }}</b>
+    </p>
+    <hr class="ed-detail__rule">
+
+    {% if mode == 'edit' %}
+    <form class="ed-detail__edit" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save">
+      <label class="ed-field__label" for="id_content">Your reply</label>
+      {% if form.content.errors %}
+      <div class="ed-alert ed-alert--error">{{ form.content.errors|join:" " }}</div>
+      {% endif %}
+      <textarea class="ed-detail__textarea" id="id_content" name="content">{{ form.content.value|default_if_none:"" }}</textarea>
+      <div class="ed-actions">
+        <button class="ed-btn" type="submit">Save changes</button>
+        <a class="ed-btn-ghost" href="{% url 'entry_detail' entry.pk %}">Cancel</a>
+      </div>
+    </form>
+    {% elif mode == 'confirm_delete' %}
+    <div class="ed-detail__body">{{ entry.content|unwrap|linebreaks }}</div>
+    <div class="ed-confirm">
+      <h2 class="ed-confirm__head">Delete this entry?</h2>
+      <p class="ed-confirm__text">This permanently removes your reply. This can&rsquo;t be undone &mdash; if you only want it out of the way, archive it instead.</p>
+      <form class="ed-actions" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <button class="ed-btn ed-btn--danger" type="submit">Delete permanently</button>
+        <a class="ed-btn-ghost" href="{% url 'entry_detail' entry.pk %}">Cancel</a>
+      </form>
+    </div>
+    {% else %}
+    <div class="ed-detail__body">{{ entry.content|unwrap|linebreaks }}</div>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

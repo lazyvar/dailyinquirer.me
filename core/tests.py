@@ -1159,3 +1159,43 @@ class EntryEditFormTests(TestCase):
     def test_real_content_is_valid(self):
         from core.forms import EntryEditForm
         self.assertTrue(EntryEditForm({'content': 'real words'}).is_valid())
+
+
+class EntryDetailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you notice today?',
+            category='Reflective', mail_day=timezone.now())
+        self.entry = Entry.objects.create(
+            content='I noticed the light.', author=self.user,
+            prompt=self.prompt,
+            pub_date=timezone.make_aware(datetime(2026, 1, 15, 12, 0)))
+
+    def test_detail_renders_for_author(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="entry"')
+        self.assertContains(response, 'What did you notice today?')
+        self.assertContains(response, 'I noticed the light.')
+
+    def test_detail_404_for_non_owner(self):
+        other = User.objects.create_user(
+            email='other@example.com', password='mostdope1')
+        self.client.force_login(other)
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_redirects_anonymous_to_login(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.url)

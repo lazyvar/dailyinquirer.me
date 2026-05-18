@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from authentication.admin import UserCreationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import (HttpResponse, HttpResponseBadRequest,
@@ -12,6 +12,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from authentication.tokens import account_activation_token, email_change_token
 from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -19,8 +20,8 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 
 from core.models import Entry, Prompt
-from core.forms import (HOUR_CHOICES, ChangeEmailForm, OnboardingForm,
-                        ResendConfirmationForm, SettingsForm)
+from core.forms import (HOUR_CHOICES, ChangeEmailForm, EntryEditForm,
+                        OnboardingForm, ResendConfirmationForm, SettingsForm)
 from core.utils import mail_newsletter
 
 from datetime import datetime
@@ -104,6 +105,54 @@ def _dashboard(request):
         'sort': sort,
     }
     return render(request, 'core/index_logged_in.html', context)
+
+
+@login_required
+def entry_detail(request, pk):
+    if request.method not in ('GET', 'HEAD', 'POST'):
+        return HttpResponseNotAllowed(['GET', 'POST'])
+
+    entry = get_object_or_404(
+        Entry.objects.select_related('prompt'),
+        pk=pk, author=request.user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'save':
+            form = EntryEditForm(request.POST)
+            if form.is_valid():
+                entry.content = form.cleaned_data['content']
+                entry.save()
+                messages.success(request, 'Your entry was updated.')
+                return redirect('entry_detail', pk=entry.pk)
+            return render(request, 'core/entry_detail.html', {
+                'entry': entry, 'mode': 'edit', 'form': form})
+        if action == 'archive':
+            entry.archived_at = timezone.now()
+            entry.save()
+            messages.success(request, 'Entry archived.')
+            return redirect('index')
+        if action == 'restore':
+            entry.archived_at = None
+            entry.save()
+            messages.success(request, 'Entry restored.')
+            return redirect('entry_detail', pk=entry.pk)
+        if action == 'delete':
+            entry.delete()
+            messages.success(request, 'Entry deleted.')
+            return redirect('index')
+        return HttpResponseBadRequest('unknown action')
+
+    mode = 'view'
+    if request.GET.get('edit'):
+        mode = 'edit'
+    elif request.GET.get('confirm_delete'):
+        mode = 'confirm_delete'
+
+    context = {'entry': entry, 'mode': mode}
+    if mode == 'edit':
+        context['form'] = EntryEditForm(initial={'content': entry.content})
+    return render(request, 'core/entry_detail.html', context)
 
 
 @login_required

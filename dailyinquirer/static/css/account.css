@@ -653,3 +653,307 @@
 .app .ed-pending__actions form {
   margin: 0;
 }
+
+/* ============================================================
+   ENTRY DETAIL & ARCHIVED PAGES
+   ============================================================ */
+
+/* --- Icons -------------------------------------------------- */
+
+.app .ed-icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.12em;
+  flex-shrink: 0;
+}
+
+/* --- Back link ---------------------------------------------- */
+
+.app .ed-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 6px 0 4px;
+}
+
+.app .ed-detail-back:hover {
+  color: var(--accent-dark);
+}
+
+/* --- Detail card -------------------------------------------- */
+
+#entry .ed-detail {
+  position: relative;
+  margin-top: 12px;
+}
+
+#entry .ed-detail__cat {
+  font-family: var(--body);
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 6px;
+}
+
+#entry .ed-detail__q {
+  font-family: var(--body);
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0 40px 8px 0;
+}
+
+#entry .ed-detail__meta {
+  font-family: var(--body);
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+#entry .ed-detail__meta b {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+#entry .ed-detail__rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 16px 0;
+}
+
+#entry .ed-detail__body {
+  font-family: var(--body);
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+#entry .ed-detail__body p {
+  margin: 0 0 0.8em;
+}
+
+#entry .ed-detail__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Overflow menu ------------------------------------------ */
+
+#entry .ed-menu {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+#entry .ed-menu__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+#entry .ed-menu__btn::-webkit-details-marker {
+  display: none;
+}
+
+#entry .ed-menu[open] .ed-menu__btn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#entry .ed-menu__list {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: 184px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 10;
+}
+
+#entry .ed-menu__form {
+  margin: 0;
+}
+
+#entry .ed-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  font-family: var(--body);
+  font-size: 0.83rem;
+  color: var(--ink);
+  text-decoration: none;
+  text-align: left;
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid #efece4;
+  cursor: pointer;
+}
+
+#entry .ed-menu__item:last-child {
+  border-bottom: 0;
+}
+
+#entry .ed-menu__item:hover {
+  background: var(--page);
+}
+
+#entry .ed-menu__item--danger {
+  color: var(--danger);
+}
+
+/* --- Edit mode ---------------------------------------------- */
+
+#entry .ed-detail__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 180px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: var(--body);
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--ink);
+  resize: vertical;
+}
+
+#entry .ed-detail__textarea:focus {
+  outline: none;
+  border-color: var(--accent-dark);
+}
+
+#entry .ed-detail__edit .ed-actions {
+  margin-top: 14px;
+}
+
+/* --- Delete confirmation ------------------------------------ */
+
+#entry .ed-confirm {
+  margin-top: 16px;
+  border: 1px solid var(--danger);
+  border-left-width: 3px;
+  background: rgba(var(--danger-rgb), 0.05);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+#entry .ed-confirm__head {
+  font-family: var(--body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--danger);
+  margin: 0 0 4px;
+}
+
+#entry .ed-confirm__text {
+  font-family: var(--body);
+  font-size: 0.83rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0 0 14px;
+}
+
+.app .ed-btn--danger {
+  background: var(--danger);
+  box-shadow: 0 1px 3px rgba(var(--danger-rgb), 0.3);
+}
+
+.app .ed-btn--danger:hover,
+.app .ed-btn--danger:focus {
+  background: #8e1b1b;
+  box-shadow: 0 4px 12px rgba(var(--danger-rgb), 0.3);
+}
+
+/* --- Clickable entry cards (dashboard + archived) ----------- */
+
+.app .ed-entry-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.app .ed-entry-link .ed-entry {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app .ed-entry-link:hover .ed-entry,
+.app .ed-entry-link:focus .ed-entry {
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Archived list ------------------------------------------ */
+
+#archived .ed-entry__q a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+#archived .ed-entry__q a:hover {
+  color: var(--accent);
+}
+
+#archived .ed-entry__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+
+#archived .ed-entry__actions form {
+  margin: 0;
+}
+
+.app .ed-btn-ghost--danger:hover,
+.app .ed-btn-ghost--danger:focus {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* --- Dashboard archived link -------------------------------- */
+
+#dashboard .ed-archived-link {
+  margin: 18px 0 0;
+}
+
+#dashboard .ed-archived-link a {
+  font-family: var(--body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+#dashboard .ed-archived-link a:hover {
+  text-decoration: underline;
+}
