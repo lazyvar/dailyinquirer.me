@@ -1,14 +1,19 @@
 /* Shared site footer. Loaded by core/base.html and registration/auth_base.html. */
 .site-footer {
+    flex-shrink: 0;
+    font-family: var(--body);
+    font-size: 0.78rem;
+}
+
+/* The bar lives inside a .container so its rule matches the page content width. */
+.site-footer__bar {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px 16px;
-    padding: 22px 24px;
+    padding: 22px 0;
     border-top: 1px solid var(--rule);
-    font-family: var(--body);
-    font-size: 0.78rem;
 }
 
 .site-footer a {
@@ -47,7 +52,7 @@
 }
 
 @media (max-width: 480px) {
-    .site-footer {
+    .site-footer__bar {
         flex-direction: column;
         gap: 10px;
     }

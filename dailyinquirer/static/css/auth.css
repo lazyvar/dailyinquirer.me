@@ -288,11 +288,6 @@
   margin-top: 4px;
 }
 
-/* Shared footer sits at the bottom of the auth flex column. */
-.auth-page .site-footer {
-  flex-shrink: 0;
-}
-
 /* --- Responsive -------------------------------------------- */
 
 /* Narrow screens: tighten card padding */

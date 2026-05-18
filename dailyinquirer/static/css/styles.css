@@ -1,6 +1,14 @@
 body {
     font-family: 'Elms Sans', system-ui, sans-serif;
     background-color: var(--page);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Content fills the viewport so the footer is pinned to the bottom. */
+.site-main {
+    flex: 1 0 auto;
 }
 
 /* xs */
