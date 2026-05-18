@@ -232,6 +232,10 @@
   margin: 0;
 }
 
+.app .ed-actions + .ed-alert {
+  margin-top: 14px;
+}
+
 /* --- Alert -------------------------------------------------- */
 
 .app .ed-alert {

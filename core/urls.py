@@ -24,6 +24,8 @@ urlpatterns = [
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
     path('settings/email/', views.manage_email_change,
          name='manage_email_change'),
+    path('settings/password/', views.send_password_reset,
+         name='send_password_reset'),
     path('settings/email/confirm/<uidb64>/<token>/',
          views.confirm_email_change, name='confirm_email_change'),
 ]
