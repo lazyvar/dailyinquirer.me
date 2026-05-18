@@ -5,67 +5,7 @@
    ============================================================ */
 
 .app {
-  padding-top: 40px;
   padding-bottom: 24px;
-}
-
-/* --- Masthead ----------------------------------------------- */
-
-.app .ed-masthead {
-  position: relative;
-  margin: 12px 0 8px;
-  background: #fff;
-  border: 1px solid var(--rule);
-  border-bottom: 3px solid var(--accent);
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-  padding: 26px 24px;
-}
-
-.app .ed-masthead__tab {
-  position: absolute;
-  bottom: 100%;
-  left: 22px;
-  margin-bottom: -1px;
-  padding: 7px 16px;
-  background: var(--accent);
-  color: #fff;
-  font-family: var(--body);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  border-radius: 7px 7px 0 0;
-}
-
-.app .ed-masthead__name {
-  font-family: var(--display);
-  font-size: clamp(1.7rem, 5.5vw, 2.4rem);
-  font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
-  margin: 0;
-}
-
-.app .ed-masthead__name a {
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.app .ed-masthead__email {
-  font-family: var(--body);
-  font-size: 0.875rem;
-  color: var(--ink-soft);
-  margin: 8px 0 0;
-}
-
-.app .ed-masthead__email a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.app .ed-masthead__email a:hover {
-  text-decoration: underline;
 }
 
 /* --- Section label ------------------------------------------ */
@@ -614,10 +554,6 @@
 /* --- Responsive --------------------------------------------- */
 
 @media (max-width: 480px) {
-  .app .ed-masthead {
-    padding: 22px 18px;
-  }
-
   #dashboard .ed-search-row {
     flex-direction: column;
   }
@@ -731,26 +667,6 @@
   stroke-linejoin: round;
   vertical-align: -0.12em;
   flex-shrink: 0;
-}
-
-/* --- Back link ---------------------------------------------- */
-
-.app .ed-detail-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--body);
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-  text-decoration: none;
-  margin: 6px 0 4px;
-}
-
-.app .ed-detail-back:hover {
-  color: var(--accent-dark);
 }
 
 /* --- Detail card -------------------------------------------- */
