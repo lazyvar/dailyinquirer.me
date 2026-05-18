@@ -1137,3 +1137,30 @@ class SendDailyMailUsesMailHourTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+
+class DashboardRouteTests(TestCase):
+    """The dashboard lives at its own /dash/ URL, gated by auth."""
+
+    def _make_user(self, confirmed=True, onboarded=True):
+        user = User.objects.create_user(
+            email='router@example.com', password='mostdope1')
+        user.confirmed_email = confirmed
+        user.onboarded = onboarded
+        user.save()
+        return user
+
+    def test_anonymous_dash_redirects_to_login(self):
+        response = self.client.get(reverse('dash'))
+        self.assertRedirects(response, '/login/?next=/dash/')
+
+    def test_confirmed_onboarded_user_sees_dashboard(self):
+        self.client.force_login(self._make_user())
+        response = self.client.get(reverse('dash'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="dashboard"')
+
+    def test_unconfirmed_user_is_logged_out_and_redirected(self):
+        self.client.force_login(self._make_user(confirmed=False))
+        response = self.client.get(reverse('dash'))
+        self.assertRedirects(response, reverse('unconfirmed_email'))

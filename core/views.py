@@ -107,6 +107,14 @@ def _dashboard(request):
 
 
 @login_required
+def dashboard(request):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+    return _dashboard(request)
+
+
+@login_required
 def settings(request):
 
     if request.method == 'POST':
