@@ -53,3 +53,18 @@ class AdminSendPromptTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.send_url)
         self.assertContains(response, "Send today's prompt")
+
+
+class UserOnboardingFieldsTests(TestCase):
+    def test_new_user_defaults(self):
+        user = User.objects.create_user(
+            email='fresh@example.com', password='mostdope1')
+        self.assertFalse(user.onboarded)
+        self.assertEqual(user.mail_time, 480)
+        self.assertEqual(user.timezone, '')
+
+    def test_mail_hour_property_converts_minutes_to_hour(self):
+        user = User.objects.create_user(
+            email='hour@example.com', password='mostdope1')
+        user.mail_time = 540
+        self.assertEqual(user.mail_hour, 9)
