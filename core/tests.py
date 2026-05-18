@@ -1641,3 +1641,60 @@ class SignedInHomeLinkTests(TestCase):
         response = self.client.get(reverse('settings'))
         self.assertContains(
             response, '<a href="/dash/">The Daily Inquirer</a>')
+
+
+class SiteNavTests(TestCase):
+    def test_dashboard_trail_is_single_current_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('dashboard')
+        self.assertEqual(trail, [{'label': 'Your writing', 'url': None}])
+
+    def test_settings_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('settings')
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['label'], 'Your writing')
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'Settings', 'url': None})
+
+    def test_archived_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('archived')
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'Archived', 'url': None})
+
+    def test_about_trail_is_single_standalone_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('about')
+        self.assertEqual(trail, [{'label': 'About', 'url': None}])
+
+    def test_active_entry_trail_has_two_crumbs_with_date_label(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        user = User.objects.create_user(
+            email='e@example.com', password='mostdope1')
+        entry = Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)))
+        trail = build_trail('entry', entry=entry)
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'May 12, 2026', 'url': None})
+
+    def test_archived_entry_trail_inserts_archived_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        user = User.objects.create_user(
+            email='e2@example.com', password='mostdope1')
+        entry = Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)),
+            archived_at=timezone.now())
+        trail = build_trail('entry', entry=entry)
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Archived', 'May 12, 2026'])
+        self.assertEqual(trail[1]['url'], reverse('archived_entries'))
+        self.assertIsNone(trail[2]['url'])
