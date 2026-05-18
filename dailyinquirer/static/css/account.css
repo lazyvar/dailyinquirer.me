@@ -313,7 +313,7 @@
 
 #onboarding .ed-timeopt__name {
   font-family: var(--body);
-  font-size: 0.84rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink);
 }
