@@ -1,16 +1,13 @@
 from django.shortcuts import render, redirect
 from authentication.admin import UserCreationForm
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import (HttpResponse, HttpResponseBadRequest,
                           HttpResponseForbidden, HttpResponseNotAllowed)
 from django.conf import settings as django_settings
-from django.template.loader import render_to_string
 from authentication.models import User
 from django.contrib.auth.decorators import login_required
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from authentication.tokens import account_activation_token, email_change_token
-from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -22,7 +19,7 @@ from core.models import Entry, Prompt
 from core.forms import (HOUR_CHOICES, ChangeEmailForm, OnboardingForm,
                         ResendConfirmationForm, SettingsForm)
 from core.utils import mail_newsletter
-from core.email import send_activation_email
+from core.email import send_activation_email, send_email_change_emails
 
 from datetime import datetime
 import hmac
@@ -277,34 +274,6 @@ def on_incoming_message(request):
         pub_date=timezone.now(),
     )
     return HttpResponse('created', status=201)
-
-
-def send_email_change_emails(request, user):
-    current_site = get_current_site(request)
-    confirm_message = render_to_string(
-        'registration/change_email_confirm.html', {
-            'domain': current_site.domain,
-            'pending_email': user.pending_email,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': email_change_token.make_token(user),
-        })
-    EmailMessage(
-        'Confirm your new Daily Inquirer email',
-        confirm_message,
-        "Beep Boop <beep-boop@dailyinquirer.me>",
-        [user.pending_email],
-    ).send()
-
-    notice_message = render_to_string(
-        'registration/change_email_notice.html', {
-            'pending_email': user.pending_email,
-        })
-    EmailMessage(
-        'Your Daily Inquirer email is being changed',
-        notice_message,
-        "Beep Boop <beep-boop@dailyinquirer.me>",
-        [user.email],
-    ).send()
 
 
 @login_required

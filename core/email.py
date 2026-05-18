@@ -38,3 +38,23 @@ def send_activation_email(request, user):
         template='account_activation',
         context={'user': user, 'confirm_url': confirm_url},
     )
+
+
+def send_email_change_emails(request, user):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = email_change_token.make_token(user)
+    confirm_url = request.build_absolute_uri(
+        reverse('confirm_email_change', kwargs={'uidb64': uid, 'token': token}))
+    send_templated_email(
+        subject='Confirm your new Daily Inquirer email',
+        to=user.pending_email,
+        template='email_change_confirm',
+        context={'pending_email': user.pending_email,
+                 'confirm_url': confirm_url},
+    )
+    send_templated_email(
+        subject='Your Daily Inquirer email is being changed',
+        to=user.email,
+        template='email_change_notice',
+        context={'pending_email': user.pending_email},
+    )

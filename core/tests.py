@@ -1155,3 +1155,26 @@ class SendDailyMailUsesMailHourTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+
+class EmailChangeEmailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='owner@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_email_change_sends_two_html_emails(self):
+        self.client.post(reverse('manage_email_change'), {
+            'action': 'request',
+            'email': 'new@example.com',
+        })
+        self.assertEqual(len(mail.outbox), 2)
+        for message in mail.outbox:
+            html = dict((mime, body) for body, mime in message.alternatives)
+            self.assertIn('text/html', html)
+            self.assertIn('The Daily Inquirer', html['text/html'])
+        recipients = sorted(m.to[0] for m in mail.outbox)
+        self.assertEqual(recipients, ['new@example.com', 'owner@example.com'])
