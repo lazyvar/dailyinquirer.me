@@ -21,6 +21,7 @@ class Entry(TimestampedModel):
     pub_date = models.DateTimeField('date published')
     author = models.ForeignKey(User, on_delete=models.PROTECT)
     prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT)
+    archived_at = models.DateTimeField(null=True, blank=True, default=None)
 
     class Meta:
         # Serves the home page's filter(author=...).order_by('-pub_date').

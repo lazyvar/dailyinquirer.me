@@ -1137,3 +1137,15 @@ class SendDailyMailUsesMailHourTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
+
+
+class EntryModelTests(TestCase):
+    def test_entry_archived_at_defaults_to_none(self):
+        user = User.objects.create_user(
+            email='model@example.com', password='mostdope1')
+        prompt = Prompt.objects.create(
+            question='Q', mail_day=timezone.now())
+        entry = Entry.objects.create(
+            content='hi', author=user, prompt=prompt,
+            pub_date=timezone.now())
+        self.assertIsNone(entry.archived_at)
