@@ -1,0 +1,7 @@
+{{ prompt.question }}
+
+Reply to this email and your response is saved to your journal.
+
+--
+Manage notifications: {{ manage_url }}
+Unsubscribe: {{ unsubscribe_url }}

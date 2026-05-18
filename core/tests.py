@@ -1265,3 +1265,36 @@ class UnsubscribeOneClickTests(TestCase):
         response = self.client.get(
             reverse('unsubscribe_one_click') + '?token=' + self._token())
         self.assertEqual(response.status_code, 405)
+
+
+class DailyPromptEmailTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='daily@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.is_subscribed = True
+        self.user.save()
+        Prompt.objects.create(
+            question='What did you notice today?',
+            mail_day=timezone.now())
+
+    def test_daily_email_uses_shared_template_with_footer_links(self):
+        mail_newsletter(self.user)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        body = html['text/html']
+        self.assertIn('The Daily Inquirer', body)
+        self.assertIn('Manage notifications', body)
+        self.assertIn('Unsubscribe', body)
+        self.assertIn('/unsubscribe/?token=', body)
+
+    def test_daily_email_sets_list_unsubscribe_headers(self):
+        mail_newsletter(self.user)
+        message = mail.outbox[0]
+        self.assertIn('List-Unsubscribe', message.extra_headers)
+        self.assertIn('/unsubscribe/one-click/?token=',
+                      message.extra_headers['List-Unsubscribe'])
+        self.assertEqual(message.extra_headers['List-Unsubscribe-Post'],
+                         'List-Unsubscribe=One-Click')
