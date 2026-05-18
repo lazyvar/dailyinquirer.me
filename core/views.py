@@ -34,14 +34,7 @@ ENTRIES_PER_PAGE = 25
 
 
 def index(request):
-    if request.user.is_authenticated:
-        if request.user.confirmed_email:
-            return _dashboard(request)
-        else:
-            logout(request)
-            return redirect('unconfirmed_email')
-    else:
-        return render(request, 'core/index.html')
+    return render(request, 'core/index.html')
 
 
 def _dashboard(request):

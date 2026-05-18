@@ -91,6 +91,21 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('index'))
         self.assertContains(response, 'href="/register/"')
         self.assertContains(response, 'href="/login/"')
+        self.assertNotContains(response, 'Take me to dashboard')
+
+    def test_logged_in_home_shows_dashboard_cta(self):
+        user = User.objects.create_user(
+            email='member@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="home"')
+        self.assertContains(response, 'Take me to dashboard')
+        self.assertContains(response, 'href="/dash/"')
+        self.assertNotContains(response, "Get started, it's free")
 
 
 class AboutPageTests(TestCase):
