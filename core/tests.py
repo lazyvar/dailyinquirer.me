@@ -107,6 +107,13 @@ class FooterTests(TestCase):
         response = self.client.get(reverse('index'))
         self.assertNotContains(response, 'footer-link')
 
+    def test_auth_pages_render_shared_footer(self):
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, 'footer.css')
+        self.assertContains(response, 'site-footer')
+        self.assertContains(response, 'href="/about/"')
+        self.assertNotContains(response, 'auth-footer')
+
 
 class LogoutTests(TestCase):
     def setUp(self):

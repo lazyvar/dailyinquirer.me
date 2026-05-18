@@ -288,34 +288,9 @@
   margin-top: 4px;
 }
 
-/* --- Footer ------------------------------------------------ */
-
-.auth-page .auth-footer {
+/* Shared footer sits at the bottom of the auth flex column. */
+.auth-page .site-footer {
   flex-shrink: 0;
-  border-top: 1px solid var(--rule);
-  text-align: center;
-  padding: 16px 20px;
-}
-
-.auth-page .auth-footer p {
-  font-family: var(--body);
-  font-size: 0.72rem;
-  color: var(--ink-faint);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.auth-page .auth-footer a {
-  color: var(--ink-faint);
-  text-decoration: none;
-  transition: color 0.12s ease;
-}
-
-.auth-page .auth-footer a:hover {
-  color: var(--accent);
 }
 
 /* --- Responsive -------------------------------------------- */
@@ -353,7 +328,6 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-page .auth-btn,
   .auth-page .auth-input,
-  .auth-page .auth-footer a,
   .auth-page .auth-wordmark a,
   .auth-page .auth-link {
     transition: none;
