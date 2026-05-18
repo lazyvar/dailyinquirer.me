@@ -22,6 +22,19 @@
     {% endfor %}
   {% endif %}
 
+  {% if email_change_confirmed %}
+  <div class="ed-alert ed-alert--ok">Your email address has been updated.</div>
+  {% endif %}
+  {% if email_change_requested %}
+  <div class="ed-alert ed-alert--ok">Confirmation sent to {{ user.pending_email }}. The change is pending until you open the link in that email.</div>
+  {% endif %}
+  {% if email_change_canceled %}
+  <div class="ed-alert ed-alert--ok">The pending email change has been canceled.</div>
+  {% endif %}
+  {% if email_change_error %}
+  <div class="ed-alert ed-alert--error">{{ email_change_error|escape }}</div>
+  {% endif %}
+
   <section class="ed-card">
     <h2 class="ed-card__head">Subscription &amp; timezone</h2>
     <p class="ed-card__sub">Control whether you get a daily prompt and when it arrives.</p>
@@ -61,6 +74,45 @@
   <section class="ed-card">
     <h2 class="ed-card__head">Account</h2>
     <p class="ed-card__sub">Manage access to your account.</p>
+
+    <div class="ed-field">
+      <span class="ed-field__label">Email address</span>
+      {% if user.pending_email %}
+      <div class="ed-pending">
+        <p class="ed-pending__text">Change to <strong>{{ user.pending_email }}</strong> is pending. Confirm it via the link we sent to that address.</p>
+        <div class="ed-pending__actions">
+          <form method="post" action="{% url 'manage_email_change' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resend">
+            <button class="ed-btn-ghost" type="submit">Resend confirmation</button>
+          </form>
+          <form method="post" action="{% url 'manage_email_change' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancel">
+            <button class="ed-btn-ghost" type="submit">Cancel change</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <details class="ed-email-edit"{% if email_change_error %} open{% endif %}>
+        <summary class="ed-email-edit__summary">
+          <span class="ed-email-edit__current">{{ user.email }}</span>
+          <span class="ed-email-edit__pencil" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 16 16"><path d="M11.5 1.5l3 3L5 14H2v-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="ed-email-edit__action">Edit</span>
+        </summary>
+        <form class="ed-email-edit__form" method="post" action="{% url 'manage_email_change' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="request">
+          <input class="ed-input" type="email" name="email" placeholder="new@email.com" value="{{ submitted_email }}" required>
+          <button class="ed-btn" type="submit">Send confirmation</button>
+        </form>
+      </details>
+      {% endif %}
+      <p class="ed-hint">Changing your email sends a confirmation link to the new address; the change takes effect once you open it.</p>
+    </div>
+
     <div class="ed-actions">
       <form action="/password_reset/" method="post">
         {% csrf_token %}

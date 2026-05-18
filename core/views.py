@@ -9,7 +9,7 @@ from authentication.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from authentication.tokens import account_activation_token
+from authentication.tokens import account_activation_token, email_change_token
 from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -19,8 +19,8 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 
 from core.models import Entry, Prompt
-from core.forms import (HOUR_CHOICES, OnboardingForm, ResendConfirmationForm,
-                        SettingsForm)
+from core.forms import (HOUR_CHOICES, ChangeEmailForm, OnboardingForm,
+                        ResendConfirmationForm, SettingsForm)
 from core.utils import mail_newsletter
 
 from datetime import datetime
@@ -128,6 +128,13 @@ def settings(request):
             return render(request, template, context)
     else:
         context = {'timezones': pytz.common_timezones, 'hours': HOUR_CHOICES}
+        email_change = request.GET.get('email_change')
+        if email_change == 'confirmed':
+            context['email_change_confirmed'] = True
+        elif email_change == 'unavailable':
+            context['email_change_error'] = (
+                "We couldn't complete the email change — that address "
+                "is no longer available.")
 
     return render(request, 'core/settings.html', context)
 
@@ -285,6 +292,109 @@ def on_incoming_message(request):
         pub_date=timezone.now(),
     )
     return HttpResponse('created', status=201)
+
+
+def send_email_change_emails(request, user):
+    current_site = get_current_site(request)
+    confirm_message = render_to_string(
+        'registration/change_email_confirm.html', {
+            'domain': current_site.domain,
+            'pending_email': user.pending_email,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': email_change_token.make_token(user),
+        })
+    EmailMessage(
+        'Confirm your new Daily Inquirer email',
+        confirm_message,
+        "Beep Boop <beep-boop@dailyinquirer.me>",
+        [user.pending_email],
+    ).send()
+
+    notice_message = render_to_string(
+        'registration/change_email_notice.html', {
+            'pending_email': user.pending_email,
+        })
+    EmailMessage(
+        'Your Daily Inquirer email is being changed',
+        notice_message,
+        "Beep Boop <beep-boop@dailyinquirer.me>",
+        [user.email],
+    ).send()
+
+
+@login_required
+def manage_email_change(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    user = request.user
+    action = request.POST.get('action', 'request')
+    context = {'timezones': pytz.common_timezones}
+
+    if action == 'cancel':
+        if user.pending_email:
+            user.pending_email = None
+            user.save()
+            context['email_change_canceled'] = True
+        return render(request, 'core/settings.html', context)
+
+    if action == 'resend':
+        if user.pending_email:
+            send_email_change_emails(request, user)
+            context['email_change_requested'] = True
+        return render(request, 'core/settings.html', context)
+
+    form = ChangeEmailForm(request.POST)
+    if not form.is_valid():
+        context['email_change_error'] = 'Enter a valid email address.'
+        context['submitted_email'] = request.POST.get('email', '')
+        return render(request, 'core/settings.html', context)
+
+    new_email = User.objects.normalize_email(form.cleaned_data['email'])
+    # normalize_email only lowercases the domain; compare fully
+    # case-insensitively so "OLD@x.com" still matches a stored "old@x.com".
+    if new_email.lower() == user.email.lower():
+        context['email_change_error'] = "That's already your email address."
+        context['submitted_email'] = new_email
+        return render(request, 'core/settings.html', context)
+
+    taken = User.objects.filter(email__iexact=new_email) \
+        .exclude(pk=user.pk).exists()
+    if taken:
+        context['email_change_error'] = 'That email address is already in use.'
+        context['submitted_email'] = new_email
+        return render(request, 'core/settings.html', context)
+
+    user.pending_email = new_email
+    user.save()
+    send_email_change_emails(request, user)
+    context['email_change_requested'] = True
+    return render(request, 'core/settings.html', context)
+
+
+def confirm_email_change(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if (user is None or not user.pending_email
+            or not email_change_token.check_token(user, token)):
+        return HttpResponse('Email change link is invalid!')
+
+    new_email = user.pending_email
+    taken = User.objects.filter(email__iexact=new_email) \
+        .exclude(pk=user.pk).exists()
+    if taken:
+        user.pending_email = None
+        user.save()
+        return redirect('/settings/?email_change=unavailable')
+
+    user.email = new_email
+    user.pending_email = None
+    user.save()
+    return redirect('/settings/?email_change=confirmed')
 
 
 def privacy(request):

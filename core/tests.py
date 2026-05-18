@@ -13,7 +13,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from authentication.models import User
-from authentication.tokens import account_activation_token
+from authentication.tokens import account_activation_token, email_change_token
 
 from core.models import Entry, Prompt, PromptSend
 from core.templatetags.entry_extras import unwrap
@@ -780,6 +780,179 @@ class RepairMigrationHistoryTests(TestCase):
         call_command("repair_migration_history")
 
         self.assertEqual(set(recorder.applied_migrations()), before)
+
+
+class EmailChangeModelTests(TestCase):
+    def test_new_user_has_no_pending_email(self):
+        user = User.objects.create_user(
+            email='m@example.com', password='mostdope1')
+        self.assertIsNone(user.pending_email)
+
+    def test_email_change_token_validates_for_pending_user(self):
+        user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        user.pending_email = 'new@example.com'
+        user.save()
+        token = email_change_token.make_token(user)
+        self.assertTrue(email_change_token.check_token(user, token))
+
+    def test_email_change_token_invalid_after_swap(self):
+        user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        user.pending_email = 'new@example.com'
+        user.save()
+        token = email_change_token.make_token(user)
+        user.email = 'new@example.com'
+        user.pending_email = None
+        user.save()
+        self.assertFalse(email_change_token.check_token(user, token))
+
+
+class EmailChangeViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='old@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+
+    def test_request_available_email_sets_pending_and_sends_two_emails(self):
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'new@example.com'})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.pending_email, 'new@example.com')
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertEqual(len(mail.outbox), 2)
+        by_subject = {m.subject: m for m in mail.outbox}
+        confirm = by_subject['Confirm your new Daily Inquirer email']
+        notice = by_subject['Your Daily Inquirer email is being changed']
+        self.assertEqual(confirm.to, ['new@example.com'])
+        self.assertEqual(notice.to, ['old@example.com'])
+
+    def test_request_taken_email_does_not_set_pending(self):
+        User.objects.create_user(
+            email='taken@example.com', password='mostdope1')
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'taken@example.com'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, 200)
+
+    def test_request_own_email_does_not_set_pending(self):
+        self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'old@example.com'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_cancel_clears_pending_email(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'cancel'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(response.status_code, 200)
+
+    def test_cancel_with_no_pending_change_is_a_noop(self):
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'cancel'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('email_change_canceled', response.context)
+
+    def test_resend_sends_confirmation_again(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'resend'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.pending_email, 'new@example.com')
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(response.status_code, 200)
+
+    def _confirm_url(self, user):
+        return reverse('confirm_email_change', kwargs={
+            'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': email_change_token.make_token(user),
+        })
+
+    def test_confirm_swaps_the_email_address(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.get(self._confirm_url(self.user), follow=True)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'new@example.com')
+        self.assertIsNone(self.user.pending_email)
+        self.assertRedirects(response, '/settings/?email_change=confirmed')
+        self.assertContains(response, 'has been updated')
+
+    def test_confirm_link_rejected_after_swap(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        url = self._confirm_url(self.user)
+        self.user.email = 'new@example.com'
+        self.user.pending_email = None
+        self.user.save()
+        response = self.client.get(url)
+        self.assertContains(response, 'invalid')
+
+    def test_confirm_when_address_taken_meanwhile(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        url = self._confirm_url(self.user)
+        User.objects.create_user(
+            email='new@example.com', password='mostdope1')
+        response = self.client.get(url, follow=True)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertIsNone(self.user.pending_email)
+        self.assertRedirects(response, '/settings/?email_change=unavailable')
+        self.assertContains(response, 'no longer available')
+
+    def test_confirm_with_malformed_link_is_rejected(self):
+        url = reverse('confirm_email_change', kwargs={
+            'uidb64': 'AAAA', 'token': 'bad-token'})
+        response = self.client.get(url)
+        self.assertContains(response, 'invalid')
+
+    def test_confirm_with_no_pending_change_is_rejected(self):
+        token = email_change_token.make_token(self.user)
+        url = reverse('confirm_email_change', kwargs={
+            'uidb64': urlsafe_base64_encode(force_bytes(self.user.pk)),
+            'token': token,
+        })
+        response = self.client.get(url)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertContains(response, 'invalid')
+
+    def test_settings_shows_email_with_edit_affordance(self):
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'old@example.com')
+        self.assertContains(response, 'ed-email-edit')
+
+    def test_settings_shows_pending_banner(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'ed-pending')
+        self.assertContains(response, 'new@example.com')
+
+    def test_request_taken_email_renders_error_alert(self):
+        User.objects.create_user(
+            email='taken@example.com', password='mostdope1')
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'taken@example.com'})
+        self.assertContains(response, 'already in use')
+        self.assertContains(response, '<details class="ed-email-edit" open>')
+
+    def test_request_available_email_renders_pending_alert(self):
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'request', 'email': 'new@example.com'})
+        self.assertContains(response, 'ed-alert--ok')
+        self.assertContains(response, 'Confirmation sent to new@example.com')
 
 
 class OnboardingPageTests(TestCase):

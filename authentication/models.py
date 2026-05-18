@@ -47,6 +47,7 @@ class User(AbstractBaseUser, TimestampedModel):
     )
     timezone = models.CharField(max_length=64, blank=True, default='')
     confirmed_email = models.BooleanField(default=False)
+    pending_email = models.EmailField(max_length=255, null=True, blank=True)
     mail_time = models.IntegerField(default=480)
     onboarded = models.BooleanField(default=False)
     is_public = models.BooleanField(default=True)
