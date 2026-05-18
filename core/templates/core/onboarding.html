@@ -7,9 +7,6 @@
 {% block content %}
 <div class="app" id="onboarding">
   <h1 class="ed-welcome">Welcome!</h1>
-  <p class="ed-welcome__sub">
-    You're in. One quick step and your daily writing prompt is ready to go.
-  </p>
 
   {% if form.errors %}
     {% for field in form %}{% for error in field.errors %}
@@ -26,7 +23,7 @@
       The Daily Inquirer sends you a writing prompt by email. Reply to it
       and your answer is saved as a journal entry.
     </p>
-    <form method="post" action="">
+    <form method="post" action="" id="onboarding-form">
       {% csrf_token %}
       <div class="ed-field">
         <label class="ed-check">
@@ -45,31 +42,39 @@
         <p class="ed-hint">We try to detect this automatically.</p>
       </div>
       <div class="ed-field">
-        <span class="ed-field__label">Delivery time</span>
+        <label class="ed-field__label" for="id_mail_hour">Delivery time</label>
         <div class="ed-timegroup">
-          <input type="radio" name="mail_hour" value="8" id="time-morning" checked>
-          <label class="ed-timeopt" for="time-morning">
+          <button type="button" class="ed-timeopt" data-hour="8">
             <span class="ed-timeopt__emoji">🌅</span>
             <span class="ed-timeopt__name">Morning</span>
             <span class="ed-timeopt__time">8:00 AM</span>
-          </label>
-          <input type="radio" name="mail_hour" value="12" id="time-lunch">
-          <label class="ed-timeopt" for="time-lunch">
+          </button>
+          <button type="button" class="ed-timeopt" data-hour="12">
             <span class="ed-timeopt__emoji">☀️</span>
-            <span class="ed-timeopt__name">Lunch</span>
+            <span class="ed-timeopt__name">Day</span>
             <span class="ed-timeopt__time">12:00 PM</span>
-          </label>
-          <input type="radio" name="mail_hour" value="19" id="time-dinner">
-          <label class="ed-timeopt" for="time-dinner">
+          </button>
+          <button type="button" class="ed-timeopt" data-hour="19">
             <span class="ed-timeopt__emoji">🌙</span>
-            <span class="ed-timeopt__name">Dinner</span>
+            <span class="ed-timeopt__name">Night</span>
             <span class="ed-timeopt__time">7:00 PM</span>
-          </label>
+          </button>
         </div>
-        <p class="ed-hint">When your prompt arrives, in your time zone.</p>
+        <select class="ed-input" name="mail_hour" id="id_mail_hour">
+          {% for h in hours %}
+          <option value="{{ h.0 }}"{% if h.0 == 8 %} selected{% endif %}>{{ h.1 }}</option>
+          {% endfor %}
+        </select>
+        <p class="ed-hint">Pick a suggested time, or choose any hour — in your time zone.</p>
       </div>
-      <button class="ed-btn" type="submit">Finish setup</button>
     </form>
+    <div class="ed-actions">
+      <button class="ed-btn" type="submit" form="onboarding-form">Finish setup</button>
+      <form action="/logout/" method="post">
+        {% csrf_token %}
+        <button class="ed-btn-ghost" type="submit">Log out</button>
+      </form>
+    </div>
   </section>
 </div>
 
@@ -77,15 +82,34 @@
   (function () {
     try {
       var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      var select = document.getElementById('id_timezone');
-      if (!tz || !select) { return; }
-      for (var i = 0; i < select.options.length; i++) {
-        if (select.options[i].value === tz) {
-          select.selectedIndex = i;
-          return;
+      var tzSelect = document.getElementById('id_timezone');
+      if (tz && tzSelect) {
+        for (var i = 0; i < tzSelect.options.length; i++) {
+          if (tzSelect.options[i].value === tz) {
+            tzSelect.selectedIndex = i;
+            break;
+          }
         }
       }
     } catch (e) { /* leave the server-rendered selection */ }
+
+    var hourSelect = document.getElementById('id_mail_hour');
+    var presets = document.querySelectorAll('.ed-timeopt');
+    if (!hourSelect || !presets.length) { return; }
+
+    function sync() {
+      presets.forEach(function (btn) {
+        btn.classList.toggle('is-active', btn.dataset.hour === hourSelect.value);
+      });
+    }
+    presets.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        hourSelect.value = btn.dataset.hour;
+        sync();
+      });
+    });
+    hourSelect.addEventListener('change', sync);
+    sync();
   })();
 </script>
 {% endblock %}

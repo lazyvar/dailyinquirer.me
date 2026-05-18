@@ -818,16 +818,25 @@ class OnboardingPageTests(TestCase):
         response = self.client.get(reverse('onboarding'))
         self.assertContains(response, 'resolvedOptions().timeZone')
 
-    def test_page_offers_morning_lunch_dinner_presets(self):
+    def test_page_offers_morning_day_night_presets(self):
         response = self.client.get(reverse('onboarding'))
-        for label in ('Morning', 'Lunch', 'Dinner'):
+        for label in ('Morning', 'Day', 'Night'):
             self.assertContains(response, label)
-        # 8am / 12pm / 7pm radio presets feed the mail_hour field.
-        for value in ('8', '12', '19'):
-            self.assertContains(
-                response, 'name="mail_hour" value="%s"' % value)
+        # 8am / 12pm / 7pm recommendation buttons drive the mail_hour select.
+        for hour in ('8', '12', '19'):
+            self.assertContains(response, 'data-hour="%s"' % hour)
 
-    def test_post_with_dinner_preset_sets_7pm(self):
+    def test_page_keeps_the_full_hour_dropdown(self):
+        response = self.client.get(reverse('onboarding'))
+        # The presets are only recommendations; every hour is still pickable.
+        self.assertContains(response, '<select class="ed-input" name="mail_hour"')
+        self.assertContains(response, 'value="15"')
+
+    def test_page_has_a_logout_button(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'action="/logout/"')
+
+    def test_post_with_night_preset_sets_7pm(self):
         self.client.post(reverse('onboarding'), {
             'timezone': 'UTC', 'mail_hour': '19'})
         self.user.refresh_from_db()
