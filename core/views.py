@@ -340,8 +340,30 @@ def manage_email_change(request):
 
 
 def confirm_email_change(request, uidb64, token):
-    # Stub — full implementation in Task 6
-    return render(request, 'registration/change_email_confirmed.html')
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if (user is None or not user.pending_email
+            or not email_change_token.check_token(user, token)):
+        return HttpResponse('Email change link is invalid!')
+
+    new_email = user.pending_email
+    taken = User.objects.filter(email__iexact=new_email) \
+        .exclude(pk=user.pk).exists()
+    if taken:
+        user.pending_email = None
+        user.save()
+        return render(request, 'registration/change_email_confirmed.html',
+                      {'taken': True, 'new_email': new_email})
+
+    user.email = new_email
+    user.pending_email = None
+    user.save()
+    return render(request, 'registration/change_email_confirmed.html',
+                  {'new_email': new_email})
 
 
 def privacy(request):

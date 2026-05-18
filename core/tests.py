@@ -824,3 +824,40 @@ class EmailChangeViewTests(TestCase):
         self.assertEqual(self.user.pending_email, 'new@example.com')
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(response.status_code, 200)
+
+    def _confirm_url(self, user):
+        return reverse('confirm_email_change', kwargs={
+            'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': email_change_token.make_token(user),
+        })
+
+    def test_confirm_swaps_the_email_address(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.get(self._confirm_url(self.user))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'new@example.com')
+        self.assertIsNone(self.user.pending_email)
+        self.assertContains(response, 'updated')
+
+    def test_confirm_link_rejected_after_swap(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        url = self._confirm_url(self.user)
+        self.user.email = 'new@example.com'
+        self.user.pending_email = None
+        self.user.save()
+        response = self.client.get(url)
+        self.assertContains(response, 'invalid')
+
+    def test_confirm_when_address_taken_meanwhile(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        url = self._confirm_url(self.user)
+        User.objects.create_user(
+            email='new@example.com', password='mostdope1')
+        response = self.client.get(url)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertIsNone(self.user.pending_email)
+        self.assertContains(response, 'unavailable')
