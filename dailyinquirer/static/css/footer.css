@@ -2,7 +2,7 @@
 .site-footer {
     flex-shrink: 0;
     font-family: var(--body);
-    font-size: 0.78rem;
+    font-size: 0.875rem;
 }
 
 /* The bar lives inside a .container so its rule matches the page content width.
@@ -55,7 +55,7 @@
 
 .site-footer__copyright {
     color: var(--ink-faint);
-    font-size: 0.73rem;
+    font-size: 0.875rem;
 }
 
 @media (max-width: 480px) {
