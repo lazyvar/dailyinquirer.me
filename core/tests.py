@@ -862,6 +862,23 @@ class EmailChangeViewTests(TestCase):
         self.assertIsNone(self.user.pending_email)
         self.assertContains(response, 'unavailable')
 
+    def test_confirm_with_malformed_link_is_rejected(self):
+        url = reverse('confirm_email_change', kwargs={
+            'uidb64': 'AAAA', 'token': 'bad-token'})
+        response = self.client.get(url)
+        self.assertContains(response, 'invalid')
+
+    def test_confirm_with_no_pending_change_is_rejected(self):
+        token = email_change_token.make_token(self.user)
+        url = reverse('confirm_email_change', kwargs={
+            'uidb64': urlsafe_base64_encode(force_bytes(self.user.pk)),
+            'token': token,
+        })
+        response = self.client.get(url)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@example.com')
+        self.assertContains(response, 'invalid')
+
     def test_settings_shows_email_with_edit_affordance(self):
         response = self.client.get(reverse('settings'))
         self.assertContains(response, 'old@example.com')
