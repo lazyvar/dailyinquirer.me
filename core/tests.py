@@ -1236,3 +1236,32 @@ class PasswordResetEmailTests(TestCase):
         self.assertIn('Reset my password', html['text/html'])
         self.assertEqual(message.subject,
                          'Reset your Daily Inquirer password')
+
+
+class UnsubscribeOneClickTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='oneclick@example.com', password='mostdope1')
+        self.user.is_subscribed = True
+        self.user.save()
+
+    def _token(self):
+        from core.utils import make_unsubscribe_token
+        return make_unsubscribe_token(self.user)
+
+    def test_post_with_valid_token_unsubscribes(self):
+        response = self.client.post(
+            reverse('unsubscribe_one_click') + '?token=' + self._token())
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_post_with_bad_token_returns_400(self):
+        response = self.client.post(
+            reverse('unsubscribe_one_click') + '?token=garbage')
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_is_rejected(self):
+        response = self.client.get(
+            reverse('unsubscribe_one_click') + '?token=' + self._token())
+        self.assertEqual(response.status_code, 405)

@@ -379,3 +379,20 @@ def unsubscribe(request):
     state = 'confirm' if user.is_subscribed else 'done'
     return render(request, 'core/unsubscribe.html',
                   {'state': state, 'email': user.email, 'token': token})
+
+
+@csrf_exempt
+def unsubscribe_one_click(request):
+    """RFC 8058 List-Unsubscribe one-click endpoint. Mail clients POST here
+    directly; the token is in the query string."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    user = read_unsubscribe_token(request.GET.get('token', ''))
+    if user is None:
+        return HttpResponseBadRequest('invalid token')
+
+    if user.is_subscribed:
+        user.is_subscribed = False
+        user.save()
+    return HttpResponse('unsubscribed', status=200)
