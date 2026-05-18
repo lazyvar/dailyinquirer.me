@@ -1,0 +1,64 @@
+/* Shared site footer. Loaded by core/base.html and registration/auth_base.html. */
+.site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 22px 24px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--body);
+    font-size: 0.78rem;
+}
+
+.site-footer a {
+    color: var(--ink-faint);
+    text-decoration: none;
+    transition: color 0.12s ease;
+}
+
+.site-footer a:hover {
+    color: var(--accent);
+}
+
+.site-footer a.site-footer__wordmark {
+    font-family: var(--display);
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+}
+
+.site-footer a.site-footer__wordmark:hover {
+    color: var(--accent);
+}
+
+.site-footer__links {
+    display: flex;
+    gap: 16px;
+}
+
+.site-footer__sep {
+    color: var(--rule);
+}
+
+.site-footer__copyright {
+    color: var(--ink-faint);
+    font-size: 0.73rem;
+}
+
+@media (max-width: 480px) {
+    .site-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .site-footer__sep {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-footer a {
+        transition: none;
+    }
+}
