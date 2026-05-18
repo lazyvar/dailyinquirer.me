@@ -7,6 +7,8 @@ def onboard_existing_users(apps, schema_editor):
 
 
 def noop(apps, schema_editor):
+    """Intentionally irreversible: prior onboarded/mail_time values are
+    not recorded, so reversing cannot restore them."""
     pass
 
 
