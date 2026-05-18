@@ -797,3 +797,22 @@ class EmailChangeViewTests(TestCase):
         self.user.refresh_from_db()
         self.assertIsNone(self.user.pending_email)
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_cancel_clears_pending_email(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'cancel'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(response.status_code, 200)
+
+    def test_resend_sends_confirmation_again(self):
+        self.user.pending_email = 'new@example.com'
+        self.user.save()
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'resend'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.pending_email, 'new@example.com')
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(response.status_code, 200)

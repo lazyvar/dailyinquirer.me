@@ -298,6 +298,18 @@ def manage_email_change(request):
     action = request.POST.get('action', 'request')
     context = {'timezones': pytz.common_timezones}
 
+    if action == 'cancel':
+        user.pending_email = None
+        user.save()
+        context['email_change_canceled'] = True
+        return render(request, 'core/settings.html', context)
+
+    if action == 'resend':
+        if user.pending_email:
+            send_email_change_emails(request, user)
+            context['email_change_requested'] = True
+        return render(request, 'core/settings.html', context)
+
     form = ChangeEmailForm(request.POST)
     if not form.is_valid():
         context['email_change_error'] = 'Enter a valid email address.'
