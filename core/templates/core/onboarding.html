@@ -26,10 +26,21 @@
     <form method="post" action="" id="onboarding-form">
       {% csrf_token %}
       <div class="ed-field">
-        <label class="ed-check">
-          <input type="checkbox" name="subscribed">
-          <span>Email me a writing prompt every day.</span>
-        </label>
+        <span class="ed-field__label">Daily email</span>
+        <div class="ed-optgroup">
+          <label class="ed-optopt">
+            <input type="radio" name="subscribed" value="false" checked>
+            <span class="ed-optopt__emoji">📖</span>
+            <span class="ed-optopt__name">Not right now</span>
+            <span class="ed-optopt__desc">Just browse the site</span>
+          </label>
+          <label class="ed-optopt">
+            <input type="radio" name="subscribed" value="true">
+            <span class="ed-optopt__emoji">✉️</span>
+            <span class="ed-optopt__name">Email me daily</span>
+            <span class="ed-optopt__desc">A prompt each morning</span>
+          </label>
+        </div>
         <p class="ed-hint">You can change this any time in settings.</p>
       </div>
       <div class="ed-field">
