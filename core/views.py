@@ -22,6 +22,7 @@ from core.models import Entry, Prompt
 from core.forms import (HOUR_CHOICES, ChangeEmailForm, OnboardingForm,
                         ResendConfirmationForm, SettingsForm)
 from core.utils import mail_newsletter
+from core.email import send_activation_email
 
 from datetime import datetime
 import hmac
@@ -210,22 +211,6 @@ def resend_confirmation(request):
     else:
         return render(request, 'registration/resend_confirmation.html')
 
-
-def send_activation_email(request, user):
-    current_site = get_current_site(request)
-    message = render_to_string('registration/confirm_email.html', {
-        'user': user,
-        'domain': current_site.domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': account_activation_token.make_token(user),
-    })
-    mail_subject = 'Activate your Daily Inquirer Account'
-    to_email = user.email
-    email = EmailMessage(mail_subject,
-                         message,
-                         "Beep Boop <beep-boop@dailyinquirer.me>",
-                         [to_email])
-    email.send()
 
 
 def activate(request, uidb64, token):

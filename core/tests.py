@@ -50,6 +50,24 @@ class EmailConfirmationTests(TestCase):
         self.assertRedirects(response, reverse('onboarding'))
 
 
+class TransactionalEmailTemplateTests(TestCase):
+    def test_activation_email_is_multipart_html(self):
+        self.client.post(reverse('register'), {
+            'email': 'tpl@example.com',
+            'password1': 'mostdope1',
+            'password2': 'mostdope1',
+        })
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        self.assertIn('text/html', html)
+        body = html['text/html']
+        self.assertIn('The Daily Inquirer', body)
+        self.assertIn('Confirm my email', body)
+        self.assertIn('An account notice from The Daily Inquirer.', body)
+        self.assertNotIn('Unsubscribe', body)
+
+
 class HomePageTests(TestCase):
     def test_home_renders_editorial_layout(self):
         response = self.client.get(reverse('index'))
