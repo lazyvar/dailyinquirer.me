@@ -288,6 +288,15 @@
   margin-top: 4px;
 }
 
+.auth-page .auth-error .auth-link {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.auth-page .auth-error .auth-link:hover {
+  color: var(--danger);
+}
+
 /* --- Responsive -------------------------------------------- */
 
 /* Narrow screens: tighten card padding */
