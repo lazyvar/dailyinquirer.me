@@ -269,6 +269,67 @@
   margin: 4px 0 16px;
 }
 
+/* --- Onboarding: daily-email opt-in choice cards ------------ */
+
+#onboarding .ed-optgroup {
+  display: flex;
+  gap: 8px;
+}
+
+#onboarding .ed-optopt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#onboarding .ed-optopt:hover {
+  border-color: var(--accent);
+}
+
+#onboarding .ed-optopt:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#onboarding .ed-optopt:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.06);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+#onboarding .ed-optopt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#onboarding .ed-optopt__emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+#onboarding .ed-optopt__name {
+  font-family: var(--body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+#onboarding .ed-optopt__desc {
+  font-family: var(--body);
+  font-size: 0.875rem;
+  color: var(--ink-faint);
+}
+
 /* --- Onboarding: Morning / Day / Night time picker ---------- */
 
 #onboarding .ed-timegroup {
