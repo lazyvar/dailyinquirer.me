@@ -1,0 +1,29 @@
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="archived">
+  {% include "core/_masthead.html" with tab="Archived" %}
+
+  {% include "core/_messages.html" %}
+
+  <a class="ed-detail-back" href="{% url 'index' %}">
+    <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#chevron-left"></use></svg>
+    Your writing
+  </a>
+
+  {% if entries %}
+    {% for entry in entries %}
+      {% include "core/_entry_card.html" with entry=entry archived=True %}
+    {% endfor %}
+  {% else %}
+    <div class="ed-empty">
+      <h2>Nothing archived.</h2>
+      <p>Entries you archive will appear here.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

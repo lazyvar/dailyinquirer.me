@@ -1282,3 +1282,40 @@ class EntryDetailTests(TestCase):
         response = self.client.get(
             reverse('entry_detail', args=[self.entry.pk]))
         self.assertNotContains(response, 'Delete this entry?')
+
+
+class ArchivedEntriesTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='archiver@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def _entry(self, content='words', archived=False):
+        prompt = Prompt.objects.create(
+            question='Q', category='Reflective', mail_day=timezone.now())
+        return Entry.objects.create(
+            content=content, author=self.user, prompt=prompt,
+            pub_date=timezone.now(),
+            archived_at=timezone.now() if archived else None)
+
+    def test_archived_page_lists_only_archived_entries(self):
+        self._entry(content='archived one', archived=True)
+        self._entry(content='active one', archived=False)
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'archived one')
+        self.assertNotContains(response, 'active one')
+
+    def test_archived_page_shows_empty_state(self):
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nothing archived.')
+
+    def test_archived_page_redirects_anonymous(self):
+        self.client.logout()
+        response = self.client.get(reverse('archived_entries'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.url)

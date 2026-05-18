@@ -156,6 +156,14 @@ def entry_detail(request, pk):
 
 
 @login_required
+def archived_entries(request):
+    entries = Entry.objects.filter(
+        author=request.user, archived_at__isnull=False
+    ).select_related('prompt').order_by('-archived_at')
+    return render(request, 'core/archived.html', {'entries': entries})
+
+
+@login_required
 def settings(request):
 
     if request.method == 'POST':
