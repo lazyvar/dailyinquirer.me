@@ -1199,3 +1199,34 @@ class EntryDetailTests(TestCase):
             reverse('entry_detail', args=[self.entry.pk]))
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login', response.url)
+
+    def test_edit_mode_shows_prefilled_textarea(self):
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]), {'edit': '1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ed-detail__textarea')
+        self.assertContains(response, 'I noticed the light.')
+
+    def test_save_updates_content_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': 'Revised words.'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertEqual(self.entry.content, 'Revised words.')
+        self.assertContains(response, 'Your entry was updated.')
+
+    def test_save_bumps_updated_at(self):
+        original = self.entry.updated_at
+        self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': 'Different words.'})
+        self.entry.refresh_from_db()
+        self.assertGreater(self.entry.updated_at, original)
+
+    def test_save_rejects_blank_content(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'save', 'content': '   '})
+        self.entry.refresh_from_db()
+        self.assertEqual(self.entry.content, 'I noticed the light.')
+        self.assertContains(response, 'ed-alert--error')
