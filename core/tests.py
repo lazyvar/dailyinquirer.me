@@ -24,7 +24,6 @@ class EmailConfirmationTests(TestCase):
     def test_register_sends_activation_email(self):
         response = self.client.post(reverse('register'), {
             'email': 'newuser@example.com',
-            'timezone': 'US/Eastern',
             'password1': 'mostdope1',
             'password2': 'mostdope1',
         })
@@ -42,11 +41,13 @@ class EmailConfirmationTests(TestCase):
             'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': account_activation_token.make_token(user),
         })
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
 
         user.refresh_from_db()
         self.assertTrue(user.confirmed_email)
-        self.assertRedirects(response, reverse('index'))
+        # A freshly-confirmed user has not onboarded yet, so the index
+        # redirect is itself gated onward to the onboarding page.
+        self.assertRedirects(response, reverse('onboarding'))
 
 
 class HomePageTests(TestCase):
@@ -70,7 +71,16 @@ class HomePageTests(TestCase):
 
     def test_home_highlights_todays_prompt(self):
         response = self.client.get(reverse('index'))
-        self.assertContains(response, 'is-today', count=1)
+        # Exactly one prompt card carries the server-rendered highlight.
+        self.assertContains(response, 'ed-prompt-card is-today', count=1)
+
+    def test_home_highlights_day_with_local_time_js(self):
+        response = self.client.get(reverse('index'))
+        # Every prompt card carries its JS weekday number, and a script
+        # re-highlights the card for the visitor's local time zone.
+        for weekday in range(7):
+            self.assertContains(response, 'data-weekday="%d"' % weekday)
+        self.assertContains(response, 'new Date().getDay()')
 
     def test_other_pages_do_not_load_home_css(self):
         response = self.client.get(reverse('terms'))
@@ -120,6 +130,7 @@ class LogoutTests(TestCase):
         self.user = User.objects.create_user(
             email='member@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
 
     def test_settings_page_logout_control_uses_post(self):
@@ -553,6 +564,7 @@ class SettingsPageTests(TestCase):
         self.user = User.objects.create_user(
             email='writer@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
         self.client.force_login(self.user)
 
@@ -569,7 +581,8 @@ class SettingsPageTests(TestCase):
 
     def test_settings_update_shows_success_alert(self):
         response = self.client.post(reverse('settings'), {
-            'subscribed': 'on', 'timezone': 'America/New_York'})
+            'subscribed': 'on', 'timezone': 'America/New_York',
+            'mail_hour': '8'})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ed-alert--ok')
 
@@ -579,6 +592,7 @@ class DashboardTests(TestCase):
         self.user = User.objects.create_user(
             email='writer@example.com', password='mostdope1')
         self.user.confirmed_email = True
+        self.user.onboarded = True
         self.user.save()
         self.client.force_login(self.user)
 
@@ -717,6 +731,7 @@ class EntryContentUnwrapTests(TestCase):
         user = User.objects.create_user(email='wrap@example.com', password='mostdope1')
         user.timezone = 'UTC'
         user.confirmed_email = True
+        user.onboarded = True
         user.save()
         prompt = Prompt.objects.create(question='Tell a story.', mail_day=timezone.now())
         Entry.objects.create(
@@ -938,3 +953,187 @@ class EmailChangeViewTests(TestCase):
             'action': 'request', 'email': 'new@example.com'})
         self.assertContains(response, 'ed-alert--ok')
         self.assertContains(response, 'Confirmation sent to new@example.com')
+
+
+class OnboardingPageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='newbie@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_get_renders_the_form(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="subscribed"')
+        self.assertContains(response, 'name="timezone"')
+        self.assertContains(response, 'name="mail_hour"')
+
+    def test_post_completes_onboarding(self):
+        response = self.client.post(reverse('onboarding'), {
+            'subscribed': 'on',
+            'timezone': 'America/New_York',
+            'mail_hour': '9',
+        })
+        self.assertRedirects(response, reverse('index'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertTrue(self.user.is_subscribed)
+        self.assertEqual(self.user.timezone, 'America/New_York')
+        self.assertEqual(self.user.mail_time, 540)
+
+    def test_post_without_subscribe_opts_the_user_out(self):
+        self.client.post(reverse('onboarding'), {
+            'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_already_onboarded_user_is_redirected_to_index(self):
+        self.user.onboarded = True
+        self.user.save()
+        response = self.client.get(reverse('onboarding'))
+        self.assertRedirects(response, reverse('index'))
+
+    def test_page_autodetects_timezone_with_js(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'resolvedOptions().timeZone')
+
+    def test_page_offers_morning_day_night_presets(self):
+        response = self.client.get(reverse('onboarding'))
+        for label in ('Morning', 'Day', 'Night'):
+            self.assertContains(response, label)
+        # 8am / 12pm / 7pm recommendation buttons drive the mail_hour select.
+        for hour in ('8', '12', '19'):
+            self.assertContains(response, 'data-hour="%s"' % hour)
+
+    def test_page_keeps_the_full_hour_dropdown(self):
+        response = self.client.get(reverse('onboarding'))
+        # The presets are only recommendations; every hour is still pickable.
+        self.assertContains(response, '<select class="ed-input" name="mail_hour"')
+        self.assertContains(response, 'value="15"')
+
+    def test_page_has_a_logout_button(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'action="/logout/"')
+
+    def test_post_with_night_preset_sets_7pm(self):
+        self.client.post(reverse('onboarding'), {
+            'timezone': 'UTC', 'mail_hour': '19'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.mail_time, 1140)
+
+
+class OnboardingGateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='gated@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+
+    def test_not_onboarded_user_is_redirected_to_onboarding(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertRedirects(response, reverse('onboarding'))
+
+    def test_onboarded_user_reaches_the_page(self):
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_onboarding_page_itself_is_not_redirected(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('onboarding'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_logout_path_is_not_redirected(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('logout'))
+        self.assertRedirects(response, reverse('index'))
+
+    def test_anonymous_user_is_not_redirected(self):
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+
+
+class SettingsSendTimeTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='clock@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_settings_page_shows_delivery_time_selector(self):
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'name="mail_hour"')
+
+    def test_post_updates_mail_time(self):
+        response = self.client.post(reverse('settings'), {
+            'subscribed': 'on',
+            'timezone': 'UTC',
+            'mail_hour': '7',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.mail_time, 420)
+
+
+class SignupWithoutTimezoneTests(TestCase):
+    def test_register_succeeds_with_only_email_and_password(self):
+        response = self.client.post(reverse('register'), {
+            'email': 'notz@example.com',
+            'password1': 'mostdope1',
+            'password2': 'mostdope1',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        user = User.objects.get(email='notz@example.com')
+        self.assertEqual(user.timezone, '')
+        self.assertFalse(user.onboarded)
+
+    def test_register_page_has_no_timezone_field(self):
+        response = self.client.get(reverse('register'))
+        self.assertNotContains(response, 'name="timezone"')
+
+
+class SendDailyMailUsesMailHourTests(TestCase):
+    def setUp(self):
+        # Drop the prompts the 0007 seed migration leaves in the test DB.
+        Prompt.objects.all().delete()
+
+    def _make_user(self, email, mail_time):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.timezone = 'UTC'
+        user.confirmed_email = True
+        user.onboarded = True
+        user.is_subscribed = True
+        user.mail_time = mail_time
+        user.save()
+        return user
+
+    @patch.object(User, 'local_time')
+    def test_skips_user_before_their_chosen_hour(self, mock_local_time):
+        self._make_user('late@example.com', mail_time=600)  # 10:00
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=9)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(PromptSend.objects.count(), 0)
+
+    @patch.object(User, 'local_time')
+    def test_sends_at_the_user_chosen_hour(self, mock_local_time):
+        user = self._make_user('late@example.com', mail_time=600)  # 10:00
+        Prompt.objects.create(question='Q', mail_day=timezone.now())
+        mock_local_time.return_value = timezone.now().replace(hour=10)
+
+        call_command('send_daily_mail')
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(PromptSend.objects.filter(user=user).count(), 1)
