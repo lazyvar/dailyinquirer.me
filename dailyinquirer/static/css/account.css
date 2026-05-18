@@ -97,7 +97,7 @@
 .app .ed-card__head {
   font-family: var(--body);
   font-size: 1.15rem;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--ink);
   margin: 0 0 4px;
 }
@@ -255,6 +255,97 @@
   border: 1px solid var(--danger);
   border-left-width: 3px;
   color: var(--danger);
+}
+
+/* --- Onboarding: welcome hero ------------------------------- */
+
+#onboarding .ed-welcome {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 9vw, 3.8rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+
+#onboarding .ed-welcome::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--accent);
+  margin-top: 16px;
+}
+
+#onboarding .ed-welcome__sub {
+  font-family: var(--body);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 40ch;
+  margin: 16px 0 22px;
+}
+
+/* --- Onboarding: Morning / Lunch / Dinner time picker ------- */
+
+#onboarding .ed-timegroup {
+  display: flex;
+  gap: 8px;
+}
+
+#onboarding .ed-timegroup input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+#onboarding .ed-timeopt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 6px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#onboarding .ed-timeopt:hover {
+  border-color: var(--accent);
+}
+
+#onboarding .ed-timeopt__emoji {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+#onboarding .ed-timeopt__name {
+  font-family: var(--body);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+#onboarding .ed-timeopt__time {
+  font-family: var(--body);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+}
+
+#onboarding .ed-timegroup input:checked + .ed-timeopt {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.06);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+#onboarding .ed-timegroup input:focus-visible + .ed-timeopt {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* --- Dashboard: filter bar ---------------------------------- */

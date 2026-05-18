@@ -786,6 +786,21 @@ class OnboardingPageTests(TestCase):
         response = self.client.get(reverse('onboarding'))
         self.assertContains(response, 'resolvedOptions().timeZone')
 
+    def test_page_offers_morning_lunch_dinner_presets(self):
+        response = self.client.get(reverse('onboarding'))
+        for label in ('Morning', 'Lunch', 'Dinner'):
+            self.assertContains(response, label)
+        # 8am / 12pm / 7pm radio presets feed the mail_hour field.
+        for value in ('8', '12', '19'):
+            self.assertContains(
+                response, 'name="mail_hour" value="%s"' % value)
+
+    def test_post_with_dinner_preset_sets_7pm(self):
+        self.client.post(reverse('onboarding'), {
+            'timezone': 'UTC', 'mail_hour': '19'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.mail_time, 1140)
+
 
 class OnboardingGateTests(TestCase):
     def setUp(self):

@@ -6,7 +6,10 @@
 
 {% block content %}
 <div class="app" id="onboarding">
-  <p class="ed-label">Welcome</p>
+  <h1 class="ed-welcome">Welcome!</h1>
+  <p class="ed-welcome__sub">
+    You're in. One quick step and your daily writing prompt is ready to go.
+  </p>
 
   {% if form.errors %}
     {% for field in form %}{% for error in field.errors %}
@@ -18,11 +21,10 @@
   {% endif %}
 
   <section class="ed-card">
-    <h2 class="ed-card__head">One quick step before you start</h2>
+    <h2 class="ed-card__head">Set up your daily prompt</h2>
     <p class="ed-card__sub">
-      The Daily Inquirer sends you a writing prompt by email each morning.
-      Reply to it and your answer is saved as a journal entry. Tell us how
-      you'd like that to work.
+      The Daily Inquirer sends you a writing prompt by email. Reply to it
+      and your answer is saved as a journal entry.
     </p>
     <form method="post" action="">
       {% csrf_token %}
@@ -43,12 +45,27 @@
         <p class="ed-hint">We try to detect this automatically.</p>
       </div>
       <div class="ed-field">
-        <label class="ed-field__label" for="id_mail_hour">Delivery time</label>
-        <select class="ed-input" name="mail_hour" id="id_mail_hour">
-          {% for h in hours %}
-          <option value="{{ h.0 }}"{% if h.0 == 8 %} selected{% endif %}>{{ h.1 }}</option>
-          {% endfor %}
-        </select>
+        <span class="ed-field__label">Delivery time</span>
+        <div class="ed-timegroup">
+          <input type="radio" name="mail_hour" value="8" id="time-morning" checked>
+          <label class="ed-timeopt" for="time-morning">
+            <span class="ed-timeopt__emoji">🌅</span>
+            <span class="ed-timeopt__name">Morning</span>
+            <span class="ed-timeopt__time">8:00 AM</span>
+          </label>
+          <input type="radio" name="mail_hour" value="12" id="time-lunch">
+          <label class="ed-timeopt" for="time-lunch">
+            <span class="ed-timeopt__emoji">☀️</span>
+            <span class="ed-timeopt__name">Lunch</span>
+            <span class="ed-timeopt__time">12:00 PM</span>
+          </label>
+          <input type="radio" name="mail_hour" value="19" id="time-dinner">
+          <label class="ed-timeopt" for="time-dinner">
+            <span class="ed-timeopt__emoji">🌙</span>
+            <span class="ed-timeopt__name">Dinner</span>
+            <span class="ed-timeopt__time">7:00 PM</span>
+          </label>
+        </div>
         <p class="ed-hint">When your prompt arrives, in your time zone.</p>
       </div>
       <button class="ed-btn" type="submit">Finish setup</button>
