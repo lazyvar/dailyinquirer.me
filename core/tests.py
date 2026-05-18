@@ -1230,3 +1230,35 @@ class EntryDetailTests(TestCase):
         self.entry.refresh_from_db()
         self.assertEqual(self.entry.content, 'I noticed the light.')
         self.assertContains(response, 'ed-alert--error')
+
+    def test_archive_sets_archived_at_and_shows_message(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'archive'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertIsNotNone(self.entry.archived_at)
+        self.assertContains(response, 'Entry archived.')
+
+    def test_restore_clears_archived_at_and_shows_message(self):
+        self.entry.archived_at = timezone.now()
+        self.entry.save()
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'restore'}, follow=True)
+        self.entry.refresh_from_db()
+        self.assertIsNone(self.entry.archived_at)
+        self.assertContains(response, 'Entry restored.')
+
+    def test_archived_entry_menu_shows_restore(self):
+        self.entry.archived_at = timezone.now()
+        self.entry.save()
+        response = self.client.get(
+            reverse('entry_detail', args=[self.entry.pk]))
+        self.assertContains(response, 'value="restore"')
+        self.assertNotContains(response, 'value="archive"')
+
+    def test_unknown_action_is_bad_request(self):
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'frobnicate'})
+        self.assertEqual(response.status_code, 400)

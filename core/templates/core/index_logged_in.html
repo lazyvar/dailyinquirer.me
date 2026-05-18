@@ -9,6 +9,8 @@
 <div class="app" id="dashboard">
   {% include "core/_masthead.html" with tab="Your writing" %}
 
+  {% include "core/_messages.html" %}
+
   <form class="ed-filters" method="get" action="/">
     <div class="ed-search-row">
       <input class="ed-search" type="text" name="q" value="{{ q }}"
