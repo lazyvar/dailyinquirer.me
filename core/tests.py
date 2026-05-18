@@ -733,3 +733,10 @@ class RepairMigrationHistoryTests(TestCase):
         call_command("repair_migration_history")
 
         self.assertEqual(set(recorder.applied_migrations()), before)
+
+
+class EmailChangeModelTests(TestCase):
+    def test_new_user_has_no_pending_email(self):
+        user = User.objects.create_user(
+            email='m@example.com', password='mostdope1')
+        self.assertIsNone(user.pending_email)
