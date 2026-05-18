@@ -807,6 +807,14 @@ class EmailChangeViewTests(TestCase):
         self.assertIsNone(self.user.pending_email)
         self.assertEqual(response.status_code, 200)
 
+    def test_cancel_with_no_pending_change_is_a_noop(self):
+        response = self.client.post(reverse('manage_email_change'), {
+            'action': 'cancel'})
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.pending_email)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('email_change_canceled', response.context)
+
     def test_resend_sends_confirmation_again(self):
         self.user.pending_email = 'new@example.com'
         self.user.save()

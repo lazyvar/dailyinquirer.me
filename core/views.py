@@ -299,9 +299,10 @@ def manage_email_change(request):
     context = {'timezones': pytz.common_timezones}
 
     if action == 'cancel':
-        user.pending_email = None
-        user.save()
-        context['email_change_canceled'] = True
+        if user.pending_email:
+            user.pending_email = None
+            user.save()
+            context['email_change_canceled'] = True
         return render(request, 'core/settings.html', context)
 
     if action == 'resend':
