@@ -509,3 +509,75 @@
     transform: none;
   }
 }
+
+/* --- Email editor (details/summary inline editor) ----------- */
+
+.app .ed-email-edit {
+  margin-top: 4px;
+}
+
+.app .ed-email-edit__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 0;
+}
+
+.app .ed-email-edit__summary::-webkit-details-marker {
+  display: none;
+}
+
+.app .ed-email-edit__current {
+  font-weight: 600;
+}
+
+.app .ed-email-edit__pencil {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+.app .ed-email-edit__action {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
+
+.app .ed-email-edit[open] .ed-email-edit__action {
+  visibility: hidden;
+}
+
+.app .ed-email-edit__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.app .ed-email-edit__form .ed-input {
+  flex: 1 1 220px;
+}
+
+/* --- Pending email-change banner ---------------------------- */
+
+.app .ed-pending {
+  border: 1px dashed var(--rule);
+  background: var(--page);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 4px;
+}
+
+.app .ed-pending__text {
+  margin: 0 0 8px;
+}
+
+.app .ed-pending__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.app .ed-pending__actions form {
+  margin: 0;
+}
