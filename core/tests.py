@@ -1767,3 +1767,21 @@ class SiteNavTests(TestCase):
         self.assertContains(response, 'ed-sitenav')
         self.assertContains(response, '>Archived</a>')
         self.assertContains(response, '>May 12, 2026</span>')
+
+    def test_about_renders_standalone_sitenav_anonymous(self):
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>About</span>')
+        # Anonymous: no email line in the masthead.
+        self.assertNotContains(response, 'ed-masthead__email')
+
+    def test_about_renders_sitenav_with_email_when_logged_in(self):
+        user = User.objects.create_user(
+            email='abt@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, 'ed-masthead__email')
