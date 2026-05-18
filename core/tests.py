@@ -1063,6 +1063,29 @@ class OnboardingPageTests(TestCase):
         self.assertTrue(self.user.onboarded)
         self.assertFalse(self.user.is_subscribed)
 
+    def test_post_with_subscribed_false_opts_the_user_out(self):
+        # The "Not right now" choice card submits subscribed=false.
+        self.client.post(reverse('onboarding'), {
+            'subscribed': 'false', 'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_post_with_subscribed_true_opts_the_user_in(self):
+        # The "Email me daily" choice card submits subscribed=true.
+        self.client.post(reverse('onboarding'), {
+            'subscribed': 'true', 'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_subscribed)
+
+    def test_page_offers_the_optin_choice_cards(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'Not right now')
+        self.assertContains(response, 'Email me daily')
+        # "Not right now" is the default selection.
+        self.assertContains(
+            response, '<input type="radio" name="subscribed" value="false" checked>')
+
     def test_already_onboarded_user_is_redirected_to_dashboard(self):
         self.user.onboarded = True
         self.user.save()
