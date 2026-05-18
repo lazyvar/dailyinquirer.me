@@ -72,13 +72,11 @@
           <form method="post" action="{% url 'manage_email_change' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="resend">
-            <input type="hidden" name="email" value="{{ user.pending_email }}">
             <button class="ed-btn-ghost" type="submit">Resend confirmation</button>
           </form>
           <form method="post" action="{% url 'manage_email_change' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="cancel">
-            <input type="hidden" name="email" value="{{ user.pending_email }}">
             <button class="ed-btn-ghost" type="submit">Cancel change</button>
           </form>
         </div>

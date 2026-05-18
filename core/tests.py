@@ -880,8 +880,10 @@ class EmailChangeViewTests(TestCase):
         response = self.client.post(reverse('manage_email_change'), {
             'action': 'request', 'email': 'taken@example.com'})
         self.assertContains(response, 'already in use')
+        self.assertContains(response, '<details class="ed-email-edit" open>')
 
     def test_request_available_email_renders_pending_alert(self):
         response = self.client.post(reverse('manage_email_change'), {
             'action': 'request', 'email': 'new@example.com'})
-        self.assertContains(response, 'pending')
+        self.assertContains(response, 'ed-alert--ok')
+        self.assertContains(response, 'Confirmation sent to new@example.com')
