@@ -70,7 +70,7 @@
       <span class="ed-field__label">Email address</span>
       {% if user.pending_email %}
       <div class="ed-pending">
-        <p class="ed-pending__text">Change to <strong>{{ user.pending_email }}</strong> is pending &mdash; confirm it via the link we sent to that address.</p>
+        <p class="ed-pending__text">Change to <strong>{{ user.pending_email }}</strong> is pending. Confirm it via the link we sent to that address.</p>
         <div class="ed-pending__actions">
           <form method="post" action="{% url 'manage_email_change' %}">
             {% csrf_token %}
