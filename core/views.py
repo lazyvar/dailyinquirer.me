@@ -305,6 +305,8 @@ def manage_email_change(request):
         return render(request, 'core/settings.html', context)
 
     new_email = User.objects.normalize_email(form.cleaned_data['email'])
+    # normalize_email only lowercases the domain; compare fully
+    # case-insensitively so "OLD@x.com" still matches a stored "old@x.com".
     if new_email.lower() == user.email.lower():
         context['email_change_error'] = "That's already your email address."
         context['submitted_email'] = new_email

@@ -768,15 +768,18 @@ class EmailChangeViewTests(TestCase):
         self.client.force_login(self.user)
 
     def test_request_available_email_sets_pending_and_sends_two_emails(self):
-        self.client.post(reverse('manage_email_change'), {
+        response = self.client.post(reverse('manage_email_change'), {
             'action': 'request', 'email': 'new@example.com'})
+        self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertEqual(self.user.pending_email, 'new@example.com')
         self.assertEqual(self.user.email, 'old@example.com')
         self.assertEqual(len(mail.outbox), 2)
-        recipients = [m.to[0] for m in mail.outbox]
-        self.assertIn('new@example.com', recipients)
-        self.assertIn('old@example.com', recipients)
+        by_subject = {m.subject: m for m in mail.outbox}
+        confirm = by_subject['Confirm your new Daily Inquirer email']
+        notice = by_subject['Your Daily Inquirer email is being changed']
+        self.assertEqual(confirm.to, ['new@example.com'])
+        self.assertEqual(notice.to, ['old@example.com'])
 
     def test_request_taken_email_does_not_set_pending(self):
         User.objects.create_user(
