@@ -28,3 +28,7 @@ class SettingsForm(forms.Form):
 
 class ChangeEmailForm(forms.Form):
     email = forms.EmailField(max_length=255)
+
+
+class EntryEditForm(forms.Form):
+    content = forms.CharField(widget=forms.Textarea)

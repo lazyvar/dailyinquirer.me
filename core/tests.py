@@ -1149,3 +1149,13 @@ class EntryModelTests(TestCase):
             content='hi', author=user, prompt=prompt,
             pub_date=timezone.now())
         self.assertIsNone(entry.archived_at)
+
+
+class EntryEditFormTests(TestCase):
+    def test_blank_content_is_invalid(self):
+        from core.forms import EntryEditForm
+        self.assertFalse(EntryEditForm({'content': '   '}).is_valid())
+
+    def test_real_content_is_valid(self):
+        from core.forms import EntryEditForm
+        self.assertTrue(EntryEditForm({'content': 'real words'}).is_valid())
