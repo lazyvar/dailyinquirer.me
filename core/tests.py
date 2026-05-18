@@ -1698,3 +1698,15 @@ class SiteNavTests(TestCase):
                          ['Your writing', 'Archived', 'May 12, 2026'])
         self.assertEqual(trail[1]['url'], reverse('archived_entries'))
         self.assertIsNone(trail[2]['url'])
+
+    def test_dashboard_renders_sitenav_current_tab(self):
+        user = User.objects.create_user(
+            email='dash@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('dash'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, 'ed-tab--current')
+        self.assertContains(response, 'Your writing')
