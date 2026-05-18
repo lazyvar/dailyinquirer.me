@@ -119,6 +119,10 @@ USE_TZ = True
 
 DEFAULT_FROM_EMAIL = 'Beep Boop <beep-boop@dailyinquirer.me>'
 
+# Absolute base URL used when building links inside emails (no request
+# is available in the daily-send cron). Overridden per environment.
+SITE_URL = 'https://www.dailyinquirer.me'
+
 # Shared secret the inbound-email Lambda must present in the
 # X-Inbound-Secret header on POST /messages/. Unset locally.
 INBOUND_SHARED_SECRET = os.environ.get('INBOUND_SHARED_SECRET')

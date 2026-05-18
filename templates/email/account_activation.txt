@@ -1,0 +1,9 @@
+Confirm your email address
+
+Welcome to The Daily Inquirer! Confirm your email to start receiving
+your daily writing prompt:
+
+{{ confirm_url }}
+
+--
+An account notice from The Daily Inquirer.

@@ -1,0 +1,11 @@
+Confirm your new email address
+
+You asked to change your Daily Inquirer email address to {{ pending_email }}.
+Confirm the change with this link:
+
+{{ confirm_url }}
+
+If you didn't request this, you can ignore this email -- nothing will change.
+
+--
+An account notice from The Daily Inquirer.
