@@ -9,6 +9,10 @@ from core.models import Prompt
 
 class AdminSendPromptTests(TestCase):
     def setUp(self):
+        # The 0007 seed migration populates 30 days of prompts into every
+        # database, the test DB included. Clear them so each test controls
+        # exactly which prompt exists for "today".
+        Prompt.objects.all().delete()
         self.admin = User.objects.create_superuser(
             email='admin@example.com', password='mostdope1')
         self.admin.timezone = 'UTC'
