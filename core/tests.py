@@ -84,6 +84,38 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'href="/login/"')
 
 
+class AboutPageTests(TestCase):
+    def test_about_page_renders(self):
+        response = self.client.get(reverse('about'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'About The Daily Inquirer')
+
+    def test_about_page_extends_base_layout(self):
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'bootstrap.css')
+        self.assertNotContains(response, 'home.css')
+
+
+class FooterTests(TestCase):
+    def test_public_pages_render_shared_footer(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(response, 'footer.css')
+        self.assertContains(response, 'site-footer')
+        self.assertContains(response, 'href="/about/"')
+        self.assertContains(response, 'mailto:hello@dailyinquirer.me')
+
+    def test_old_footer_link_class_is_gone(self):
+        response = self.client.get(reverse('index'))
+        self.assertNotContains(response, 'footer-link')
+
+    def test_auth_pages_render_shared_footer(self):
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, 'footer.css')
+        self.assertContains(response, 'site-footer')
+        self.assertContains(response, 'href="/about/"')
+        self.assertNotContains(response, 'auth-footer')
+
+
 class LogoutTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

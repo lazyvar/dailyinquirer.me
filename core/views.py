@@ -293,3 +293,7 @@ def privacy(request):
 
 def terms(request):
     return render(request, 'core/terms.html')
+
+
+def about(request):
+    return render(request, 'core/about.html')

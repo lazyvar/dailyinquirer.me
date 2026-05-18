@@ -13,22 +13,15 @@
     <link href="/static/css/fonts.css" rel="stylesheet">
     <link href="/static/css/styles.css" rel="stylesheet">
     <link href="/static/css/tokens.css" rel="stylesheet">
+    <link href="/static/css/footer.css" rel="stylesheet">
     {% block extra_head %}{% endblock %}
 </head>
 
 <body>
-    <div class="container">
+    <div class="container site-main">
         {% block content %} {% endblock %}
-        <div class="row justify-content-between">
-            <div class="col">
-                <p><!--<a href="/about/" class="footer-link">About</a>--><a href="/terms/" class="footer-link">Terms</a><a href="/privacy/" class="footer-link">Privacy</a></p>
-            </div>
-<!--        <div class="col text-right">
-                <p><a href="#">mack.cloud</a></p>
-            </div>
--->
-        </div>
     </div>
+    {% include "core/_footer.html" %}
     <script src="/static/js/hack.js"></script>
 </body>
 
