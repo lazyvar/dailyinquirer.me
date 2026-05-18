@@ -1725,3 +1725,15 @@ class SiteNavTests(TestCase):
             '<a class="ed-tab ed-tab--link" href="%s">Your writing</a>'
             % reverse('dash'), html=False)
         self.assertContains(response, '>Settings</span>')
+
+    def test_archived_renders_sitenav_and_drops_back_link(self):
+        user = User.objects.create_user(
+            email='arc@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('archived_entries'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>Archived</span>')
+        self.assertNotContains(response, 'ed-detail-back')

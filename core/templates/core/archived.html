@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load sitenav %}
 
 {% block extra_head %}
 <link href="/static/css/account.css" rel="stylesheet">
@@ -6,14 +7,9 @@
 
 {% block content %}
 <div class="app" id="archived">
-  {% include "core/_masthead.html" with tab="Archived" %}
+  {% sitenav 'archived' %}
 
   {% include "core/_messages.html" %}
-
-  <a class="ed-detail-back" href="{% url 'dash' %}">
-    <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#chevron-left"></use></svg>
-    Your writing
-  </a>
 
   {% if entries %}
     {% for entry in entries %}
