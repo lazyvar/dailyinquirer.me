@@ -6,8 +6,8 @@ from core.utils import send_prompt_to_user
 
 class Command(BaseCommand):
     help = ("Send today's prompt to every confirmed, subscribed user "
-            "whose local time is at or past 8am and who has not yet "
-            "received it. Intended to run hourly.")
+            "whose local time is at or past their chosen send hour and "
+            "who has not yet received it. Intended to run hourly.")
 
     def handle(self, *args, **options):
         for user in User.objects.filter(confirmed_email=True,
