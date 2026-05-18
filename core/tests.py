@@ -1710,3 +1710,18 @@ class SiteNavTests(TestCase):
         self.assertContains(response, 'ed-sitenav')
         self.assertContains(response, 'ed-tab--current')
         self.assertContains(response, 'Your writing')
+
+    def test_settings_renders_sitenav_with_ancestor_link(self):
+        user = User.objects.create_user(
+            email='set@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(
+            response,
+            '<a class="ed-tab ed-tab--link" href="%s">Your writing</a>'
+            % reverse('dash'), html=False)
+        self.assertContains(response, '>Settings</span>')
