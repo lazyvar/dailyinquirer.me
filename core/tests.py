@@ -1737,3 +1737,33 @@ class SiteNavTests(TestCase):
         self.assertContains(response, 'ed-sitenav')
         self.assertContains(response, '>Archived</span>')
         self.assertNotContains(response, 'ed-detail-back')
+
+    def _make_entry(self, email, archived=False):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        return user, Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)),
+            archived_at=timezone.now() if archived else None)
+
+    def test_active_entry_renders_two_crumb_sitenav(self):
+        user, entry = self._make_entry('ent@example.com')
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse('entry_detail', args=[entry.pk]))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>May 12, 2026</span>')
+        self.assertNotContains(response, 'ed-detail-back')
+
+    def test_archived_entry_renders_three_crumb_sitenav(self):
+        user, entry = self._make_entry('ent2@example.com', archived=True)
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse('entry_detail', args=[entry.pk]))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>Archived</a>')
+        self.assertContains(response, '>May 12, 2026</span>')

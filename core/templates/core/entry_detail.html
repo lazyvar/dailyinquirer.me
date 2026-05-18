@@ -1,5 +1,6 @@
 {% extends "core/base.html" %}
 {% load entry_extras %}
+{% load sitenav %}
 
 {% block extra_head %}
 <link href="/static/css/account.css" rel="stylesheet">
@@ -7,10 +8,7 @@
 
 {% block content %}
 <div class="app" id="entry">
-  <a class="ed-detail-back" href="{% url 'dash' %}">
-    <svg class="ed-icon" aria-hidden="true"><use href="/static/img/icons.svg#chevron-left"></use></svg>
-    Your writing
-  </a>
+  {% sitenav 'entry' entry=entry %}
 
   {% include "core/_messages.html" %}
 
