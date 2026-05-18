@@ -68,6 +68,46 @@ class TransactionalEmailTemplateTests(TestCase):
         self.assertNotIn('Unsubscribe', body)
 
 
+class UnsubscribePageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='sub@example.com', password='mostdope1')
+        self.user.is_subscribed = True
+        self.user.save()
+
+    def _token(self):
+        from core.utils import make_unsubscribe_token
+        return make_unsubscribe_token(self.user)
+
+    def test_get_with_valid_token_shows_confirm_state(self):
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Unsubscribe from the daily prompt?')
+        self.assertContains(response, 'sub@example.com')
+
+    def test_get_with_bad_token_shows_error_state(self):
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': 'not-a-real-token'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'no longer valid')
+
+    def test_get_when_already_unsubscribed_shows_done_state(self):
+        self.user.is_subscribed = False
+        self.user.save()
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertContains(response, "You've been unsubscribed")
+
+    def test_post_with_valid_token_unsubscribes(self):
+        response = self.client.post(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You've been unsubscribed")
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_subscribed)
+
+
 class HomePageTests(TestCase):
     def test_home_renders_editorial_layout(self):
         response = self.client.get(reverse('index'))

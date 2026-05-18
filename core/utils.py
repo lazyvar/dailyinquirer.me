@@ -1,7 +1,13 @@
 from core.models import Prompt, PromptSend
+from authentication.models import User
+from django.conf import settings
+from django.core import signing
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
+
+from core.email import send_templated_email
 
 
 def mail_newsletter(user):
@@ -73,3 +79,23 @@ def send_prompt_to_user(user, force=False):
         user=user, prompt=sent_prompt,
         defaults={'sent_at': timezone.now()})
     return sent_prompt
+
+
+UNSUBSCRIBE_SALT = 'daily-prompt-unsubscribe'
+
+
+def make_unsubscribe_token(user):
+    """Return a signed, non-expiring token identifying the user."""
+    return signing.dumps(user.pk, salt=UNSUBSCRIBE_SALT)
+
+
+def read_unsubscribe_token(token):
+    """Return the User for a valid token, or None if it is invalid."""
+    try:
+        pk = signing.loads(token, salt=UNSUBSCRIBE_SALT)
+    except signing.BadSignature:
+        return None
+    try:
+        return User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return None

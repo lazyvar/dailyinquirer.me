@@ -18,7 +18,7 @@ from django.utils.dateparse import parse_date
 from core.models import Entry, Prompt
 from core.forms import (HOUR_CHOICES, ChangeEmailForm, OnboardingForm,
                         ResendConfirmationForm, SettingsForm)
-from core.utils import mail_newsletter
+from core.utils import mail_newsletter, read_unsubscribe_token
 from core.email import send_activation_email, send_email_change_emails
 
 from datetime import datetime
@@ -361,3 +361,21 @@ def terms(request):
 
 def about(request):
     return render(request, 'core/about.html')
+
+
+def unsubscribe(request):
+    token = request.POST.get('token') or request.GET.get('token', '')
+    user = read_unsubscribe_token(token)
+    if user is None:
+        return render(request, 'core/unsubscribe.html', {'state': 'error'})
+
+    if request.method == 'POST':
+        if user.is_subscribed:
+            user.is_subscribed = False
+            user.save()
+        return render(request, 'core/unsubscribe.html',
+                      {'state': 'done', 'email': user.email})
+
+    state = 'confirm' if user.is_subscribed else 'done'
+    return render(request, 'core/unsubscribe.html',
+                  {'state': state, 'email': user.email, 'token': token})

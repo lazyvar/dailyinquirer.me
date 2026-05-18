@@ -10,6 +10,7 @@ urlpatterns = [
     path('privacy/', views.privacy, name='privacy'),
     path('about/', views.about, name='about'),
     path('settings/', views.settings, name='settings'),
+    path('unsubscribe/', views.unsubscribe, name='unsubscribe'),
     path('onboarding/', views.onboarding, name='onboarding'),
     path('resend_confirmation/', views.resend_confirmation,
          name='resend_confirmation'),
