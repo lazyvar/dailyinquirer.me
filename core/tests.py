@@ -866,11 +866,12 @@ class EmailChangeViewTests(TestCase):
     def test_confirm_swaps_the_email_address(self):
         self.user.pending_email = 'new@example.com'
         self.user.save()
-        response = self.client.get(self._confirm_url(self.user))
+        response = self.client.get(self._confirm_url(self.user), follow=True)
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, 'new@example.com')
         self.assertIsNone(self.user.pending_email)
-        self.assertContains(response, 'updated')
+        self.assertRedirects(response, '/settings/?email_change=confirmed')
+        self.assertContains(response, 'has been updated')
 
     def test_confirm_link_rejected_after_swap(self):
         self.user.pending_email = 'new@example.com'
@@ -888,11 +889,12 @@ class EmailChangeViewTests(TestCase):
         url = self._confirm_url(self.user)
         User.objects.create_user(
             email='new@example.com', password='mostdope1')
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, 'old@example.com')
         self.assertIsNone(self.user.pending_email)
-        self.assertContains(response, 'unavailable')
+        self.assertRedirects(response, '/settings/?email_change=unavailable')
+        self.assertContains(response, 'no longer available')
 
     def test_confirm_with_malformed_link_is_rejected(self):
         url = reverse('confirm_email_change', kwargs={

@@ -22,6 +22,9 @@
     {% endfor %}
   {% endif %}
 
+  {% if email_change_confirmed %}
+  <div class="ed-alert ed-alert--ok">Your email address has been updated.</div>
+  {% endif %}
   {% if email_change_requested %}
   <div class="ed-alert ed-alert--ok">Confirmation sent to {{ user.pending_email }}. The change is pending until you open the link in that email.</div>
   {% endif %}

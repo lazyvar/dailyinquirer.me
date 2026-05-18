@@ -124,6 +124,13 @@ def settings(request):
             return render(request, template, context)
     else:
         context = {'timezones': pytz.common_timezones}
+        email_change = request.GET.get('email_change')
+        if email_change == 'confirmed':
+            context['email_change_confirmed'] = True
+        elif email_change == 'unavailable':
+            context['email_change_error'] = (
+                "We couldn't complete the email change — that address "
+                "is no longer available.")
 
     return render(request, 'core/settings.html', context)
 
@@ -356,14 +363,12 @@ def confirm_email_change(request, uidb64, token):
     if taken:
         user.pending_email = None
         user.save()
-        return render(request, 'registration/change_email_confirmed.html',
-                      {'taken': True, 'new_email': new_email})
+        return redirect('/settings/?email_change=unavailable')
 
     user.email = new_email
     user.pending_email = None
     user.save()
-    return render(request, 'registration/change_email_confirmed.html',
-                  {'new_email': new_email})
+    return redirect('/settings/?email_change=confirmed')
 
 
 def privacy(request):
