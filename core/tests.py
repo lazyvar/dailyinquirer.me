@@ -733,3 +733,49 @@ class RepairMigrationHistoryTests(TestCase):
         call_command("repair_migration_history")
 
         self.assertEqual(set(recorder.applied_migrations()), before)
+
+
+class OnboardingPageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='newbie@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_get_renders_the_form(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="subscribed"')
+        self.assertContains(response, 'name="timezone"')
+        self.assertContains(response, 'name="mail_hour"')
+
+    def test_post_completes_onboarding(self):
+        response = self.client.post(reverse('onboarding'), {
+            'subscribed': 'on',
+            'timezone': 'America/New_York',
+            'mail_hour': '9',
+        })
+        self.assertRedirects(response, reverse('index'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertTrue(self.user.is_subscribed)
+        self.assertEqual(self.user.timezone, 'America/New_York')
+        self.assertEqual(self.user.mail_time, 540)
+
+    def test_post_without_subscribe_opts_the_user_out(self):
+        self.client.post(reverse('onboarding'), {
+            'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_already_onboarded_user_is_redirected_to_index(self):
+        self.user.onboarded = True
+        self.user.save()
+        response = self.client.get(reverse('onboarding'))
+        self.assertRedirects(response, reverse('index'))
+
+    def test_page_autodetects_timezone_with_js(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'resolvedOptions().timeZone')

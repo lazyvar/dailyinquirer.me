@@ -1,0 +1,74 @@
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="onboarding">
+  <p class="ed-label">Welcome</p>
+
+  {% if form.errors %}
+    {% for field in form %}{% for error in field.errors %}
+    <div class="ed-alert ed-alert--error">{{ error|escape }}</div>
+    {% endfor %}{% endfor %}
+    {% for error in form.non_field_errors %}
+    <div class="ed-alert ed-alert--error">{{ error|escape }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <section class="ed-card">
+    <h2 class="ed-card__head">One quick step before you start</h2>
+    <p class="ed-card__sub">
+      The Daily Inquirer sends you a writing prompt by email each morning.
+      Reply to it and your answer is saved as a journal entry. Tell us how
+      you'd like that to work.
+    </p>
+    <form method="post" action="">
+      {% csrf_token %}
+      <div class="ed-field">
+        <label class="ed-check">
+          <input type="checkbox" name="subscribed">
+          <span>Email me a writing prompt every day.</span>
+        </label>
+        <p class="ed-hint">You can change this any time in settings.</p>
+      </div>
+      <div class="ed-field">
+        <label class="ed-field__label" for="id_timezone">Time zone</label>
+        <select class="ed-input" name="timezone" id="id_timezone">
+          {% for tz in timezones %}
+          <option value="{{ tz }}"{% if tz == user.timezone %} selected{% endif %}>{{ tz }}</option>
+          {% endfor %}
+        </select>
+        <p class="ed-hint">We try to detect this automatically.</p>
+      </div>
+      <div class="ed-field">
+        <label class="ed-field__label" for="id_mail_hour">Delivery time</label>
+        <select class="ed-input" name="mail_hour" id="id_mail_hour">
+          {% for h in hours %}
+          <option value="{{ h.0 }}"{% if h.0 == 8 %} selected{% endif %}>{{ h.1 }}</option>
+          {% endfor %}
+        </select>
+        <p class="ed-hint">When your prompt arrives, in your time zone.</p>
+      </div>
+      <button class="ed-btn" type="submit">Finish setup</button>
+    </form>
+  </section>
+</div>
+
+<script>
+  (function () {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      var select = document.getElementById('id_timezone');
+      if (!tz || !select) { return; }
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === tz) {
+          select.selectedIndex = i;
+          return;
+        }
+      }
+    } catch (e) { /* leave the server-rendered selection */ }
+  })();
+</script>
+{% endblock %}
