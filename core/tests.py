@@ -50,6 +50,64 @@ class EmailConfirmationTests(TestCase):
         self.assertRedirects(response, reverse('onboarding'))
 
 
+class TransactionalEmailTemplateTests(TestCase):
+    def test_activation_email_is_multipart_html(self):
+        self.client.post(reverse('register'), {
+            'email': 'tpl@example.com',
+            'password1': 'mostdope1',
+            'password2': 'mostdope1',
+        })
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        self.assertIn('text/html', html)
+        body = html['text/html']
+        self.assertIn('The Daily Inquirer', body)
+        self.assertIn('Confirm my email', body)
+        self.assertIn('An account notice from The Daily Inquirer.', body)
+        self.assertNotIn('Unsubscribe', body)
+
+
+class UnsubscribePageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='sub@example.com', password='mostdope1')
+        self.user.is_subscribed = True
+        self.user.save()
+
+    def _token(self):
+        from core.utils import make_unsubscribe_token
+        return make_unsubscribe_token(self.user)
+
+    def test_get_with_valid_token_shows_confirm_state(self):
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Unsubscribe from the daily prompt?')
+        self.assertContains(response, 'sub@example.com')
+
+    def test_get_with_bad_token_shows_error_state(self):
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': 'not-a-real-token'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'no longer valid')
+
+    def test_get_when_already_unsubscribed_shows_done_state(self):
+        self.user.is_subscribed = False
+        self.user.save()
+        response = self.client.get(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertContains(response, "You've been unsubscribed")
+
+    def test_post_with_valid_token_unsubscribes(self):
+        response = self.client.post(
+            reverse('unsubscribe'), {'token': self._token()})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You've been unsubscribed")
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_subscribed)
+
+
 class HomePageTests(TestCase):
     def test_home_renders_editorial_layout(self):
         response = self.client.get(reverse('index'))
@@ -1005,6 +1063,29 @@ class OnboardingPageTests(TestCase):
         self.assertTrue(self.user.onboarded)
         self.assertFalse(self.user.is_subscribed)
 
+    def test_post_with_subscribed_false_opts_the_user_out(self):
+        # The "Not right now" choice card submits subscribed=false.
+        self.client.post(reverse('onboarding'), {
+            'subscribed': 'false', 'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.onboarded)
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_post_with_subscribed_true_opts_the_user_in(self):
+        # The "Email me daily" choice card submits subscribed=true.
+        self.client.post(reverse('onboarding'), {
+            'subscribed': 'true', 'timezone': 'UTC', 'mail_hour': '8'})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_subscribed)
+
+    def test_page_offers_the_optin_choice_cards(self):
+        response = self.client.get(reverse('onboarding'))
+        self.assertContains(response, 'Not right now')
+        self.assertContains(response, 'Email me daily')
+        # "Not right now" is the default selection.
+        self.assertContains(
+            response, '<input type="radio" name="subscribed" value="false" checked>')
+
     def test_already_onboarded_user_is_redirected_to_dashboard(self):
         self.user.onboarded = True
         self.user.save()
@@ -1386,6 +1467,109 @@ class DashboardArchiveIntegrationTests(TestCase):
         self._entry(content='visible entry', archived=False)
         response = self.client.get(reverse('dash'))
         self.assertNotContains(response, 'ed-archived-link')
+
+
+class EmailChangeEmailTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='owner@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_email_change_sends_two_html_emails(self):
+        self.client.post(reverse('manage_email_change'), {
+            'action': 'request',
+            'email': 'new@example.com',
+        })
+        self.assertEqual(len(mail.outbox), 2)
+        for message in mail.outbox:
+            html = dict((mime, body) for body, mime in message.alternatives)
+            self.assertIn('text/html', html)
+            self.assertIn('The Daily Inquirer', html['text/html'])
+        recipients = sorted(m.to[0] for m in mail.outbox)
+        self.assertEqual(recipients, ['new@example.com', 'owner@example.com'])
+
+
+class PasswordResetEmailTests(TestCase):
+    def test_password_reset_sends_html_email(self):
+        User.objects.create_user(
+            email='reset@example.com', password='mostdope1')
+        response = self.client.post(reverse('password_reset'), {
+            'email': 'reset@example.com',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        self.assertIn('text/html', html)
+        self.assertIn('The Daily Inquirer', html['text/html'])
+        self.assertIn('Reset my password', html['text/html'])
+        self.assertEqual(message.subject,
+                         'Reset your Daily Inquirer password')
+
+
+class UnsubscribeOneClickTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='oneclick@example.com', password='mostdope1')
+        self.user.is_subscribed = True
+        self.user.save()
+
+    def _token(self):
+        from core.utils import make_unsubscribe_token
+        return make_unsubscribe_token(self.user)
+
+    def test_post_with_valid_token_unsubscribes(self):
+        response = self.client.post(
+            reverse('unsubscribe_one_click') + '?token=' + self._token())
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_subscribed)
+
+    def test_post_with_bad_token_returns_400(self):
+        response = self.client.post(
+            reverse('unsubscribe_one_click') + '?token=garbage')
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_is_rejected(self):
+        response = self.client.get(
+            reverse('unsubscribe_one_click') + '?token=' + self._token())
+        self.assertEqual(response.status_code, 405)
+
+
+class DailyPromptEmailTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='daily@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.is_subscribed = True
+        self.user.save()
+        Prompt.objects.create(
+            question='What did you notice today?',
+            mail_day=timezone.now())
+
+    def test_daily_email_uses_shared_template_with_footer_links(self):
+        mail_newsletter(self.user)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html = dict((mime, body) for body, mime in message.alternatives)
+        body = html['text/html']
+        self.assertIn('The Daily Inquirer', body)
+        self.assertIn('Manage notifications', body)
+        self.assertIn('Unsubscribe', body)
+        self.assertIn('/unsubscribe/?token=', body)
+
+    def test_daily_email_sets_list_unsubscribe_headers(self):
+        mail_newsletter(self.user)
+        message = mail.outbox[0]
+        self.assertIn('List-Unsubscribe', message.extra_headers)
+        self.assertIn('/unsubscribe/one-click/?token=',
+                      message.extra_headers['List-Unsubscribe'])
+        self.assertEqual(message.extra_headers['List-Unsubscribe-Post'],
+                         'List-Unsubscribe=One-Click')
 
 
 class DashboardRouteTests(TestCase):

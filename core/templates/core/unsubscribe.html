@@ -1,0 +1,41 @@
+{% extends "core/base.html" %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="unsubscribe">
+  <p class="ed-label" style="text-align:center;">The Daily Inquirer</p>
+
+  <section class="ed-card">
+    {% if state == 'confirm' %}
+      <h2 class="ed-card__head">Unsubscribe from the daily prompt?</h2>
+      <p class="ed-card__sub">This stops the daily writing prompt from arriving at <strong>{{ email }}</strong>.</p>
+      <p class="ed-card__sub">Your journal and account stay exactly as they are, and you can resubscribe any time. Account emails such as password resets will still reach you.</p>
+      <div class="ed-actions">
+        <form method="post" action="{% url 'unsubscribe' %}">
+          {% csrf_token %}
+          <input type="hidden" name="token" value="{{ token }}">
+          <button class="ed-btn" type="submit">Unsubscribe me</button>
+        </form>
+        <a class="ed-btn-ghost" href="/">Keep my subscription</a>
+      </div>
+    {% elif state == 'done' %}
+      <div style="width:38px; height:38px; border-radius:50%; background:#009302; color:#fff; text-align:center; line-height:38px; font-size:20px; margin-bottom:14px;">&#10003;</div>
+      <h2 class="ed-card__head">You've been unsubscribed</h2>
+      <p class="ed-card__sub">The daily writing prompt will no longer be sent to <strong>{{ email }}</strong>.</p>
+      <p class="ed-card__sub">You can resubscribe any time from your settings.</p>
+      <div class="ed-actions">
+        <a class="ed-btn" href="/">OK, thanks</a>
+      </div>
+    {% else %}
+      <h2 class="ed-card__head">This link is no longer valid</h2>
+      <p class="ed-card__sub">We couldn't read this unsubscribe link. You can manage your subscription from your account settings instead.</p>
+      <div class="ed-actions">
+        <a class="ed-btn" href="/settings/">Go to settings</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

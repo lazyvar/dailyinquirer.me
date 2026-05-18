@@ -1,16 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from authentication.admin import UserCreationForm
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import (HttpResponse, HttpResponseBadRequest,
                           HttpResponseForbidden, HttpResponseNotAllowed)
 from django.conf import settings as django_settings
-from django.template.loader import render_to_string
 from authentication.models import User
 from django.contrib.auth.decorators import login_required
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from authentication.tokens import account_activation_token, email_change_token
-from django.core.mail import EmailMessage
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +19,8 @@ from django.utils.dateparse import parse_date
 from core.models import Entry, Prompt
 from core.forms import (HOUR_CHOICES, ChangeEmailForm, EntryEditForm,
                         OnboardingForm, ResendConfirmationForm, SettingsForm)
-from core.utils import mail_newsletter
+from core.utils import mail_newsletter, read_unsubscribe_token
+from core.email import send_activation_email, send_email_change_emails
 
 from datetime import datetime
 import hmac
@@ -275,22 +273,6 @@ def resend_confirmation(request):
         return render(request, 'registration/resend_confirmation.html')
 
 
-def send_activation_email(request, user):
-    current_site = get_current_site(request)
-    message = render_to_string('registration/confirm_email.html', {
-        'user': user,
-        'domain': current_site.domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': account_activation_token.make_token(user),
-    })
-    mail_subject = 'Activate your Daily Inquirer Account'
-    to_email = user.email
-    email = EmailMessage(mail_subject,
-                         message,
-                         "Beep Boop <beep-boop@dailyinquirer.me>",
-                         [to_email])
-    email.send()
-
 
 def activate(request, uidb64, token):
     try:
@@ -356,34 +338,6 @@ def on_incoming_message(request):
         pub_date=timezone.now(),
     )
     return HttpResponse('created', status=201)
-
-
-def send_email_change_emails(request, user):
-    current_site = get_current_site(request)
-    confirm_message = render_to_string(
-        'registration/change_email_confirm.html', {
-            'domain': current_site.domain,
-            'pending_email': user.pending_email,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': email_change_token.make_token(user),
-        })
-    EmailMessage(
-        'Confirm your new Daily Inquirer email',
-        confirm_message,
-        "Beep Boop <beep-boop@dailyinquirer.me>",
-        [user.pending_email],
-    ).send()
-
-    notice_message = render_to_string(
-        'registration/change_email_notice.html', {
-            'pending_email': user.pending_email,
-        })
-    EmailMessage(
-        'Your Daily Inquirer email is being changed',
-        notice_message,
-        "Beep Boop <beep-boop@dailyinquirer.me>",
-        [user.email],
-    ).send()
 
 
 @login_required
@@ -471,3 +425,38 @@ def terms(request):
 
 def about(request):
     return render(request, 'core/about.html')
+
+
+def unsubscribe(request):
+    token = request.POST.get('token') or request.GET.get('token', '')
+    user = read_unsubscribe_token(token)
+    if user is None:
+        return render(request, 'core/unsubscribe.html', {'state': 'error'})
+
+    if request.method == 'POST':
+        if user.is_subscribed:
+            user.is_subscribed = False
+            user.save()
+        return render(request, 'core/unsubscribe.html',
+                      {'state': 'done', 'email': user.email})
+
+    state = 'confirm' if user.is_subscribed else 'done'
+    return render(request, 'core/unsubscribe.html',
+                  {'state': state, 'email': user.email, 'token': token})
+
+
+@csrf_exempt
+def unsubscribe_one_click(request):
+    """RFC 8058 List-Unsubscribe one-click endpoint. Mail clients POST here
+    directly; the token is in the query string."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    user = read_unsubscribe_token(request.GET.get('token', ''))
+    if user is None:
+        return HttpResponseBadRequest('invalid token')
+
+    if user.is_subscribed:
+        user.is_subscribed = False
+        user.save()
+    return HttpResponse('unsubscribed', status=200)

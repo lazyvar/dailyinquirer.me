@@ -8,8 +8,6 @@
     <meta name="x-apple-disable-message-reformatting">
     <title>The Daily Inquirer</title>
     <style type="text/css">
-        /* Self-hosted brand faces; clients that ignore @font-face fall back
-           to the inline Helvetica/Georgia stacks. */
         @font-face {
             font-family: 'Elms Sans';
             font-style: normal;
@@ -34,9 +32,8 @@
 </head>
 
 <body style="margin:0; padding:0; background-color:#fbfaf5;">
-    <!-- preheader: hidden, shows as the inbox preview line -->
     <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:#fbfaf5; font-size:1px; line-height:1px;">
-        Today's writing prompt from The Daily Inquirer. Reply to this email to answer.
+        {% block preheader %}A message from The Daily Inquirer.{% endblock %}
     </div>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fbfaf5;">
@@ -51,42 +48,27 @@
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="background-color:#009302; border-radius:7px 7px 0 0; padding:8px 16px; font-family:'Elms Sans',Helvetica,Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#ffffff;">
-                                        {{ prompt.mail_day|date:"l, F j, Y" }}
+                                        {% block tab_label %}{% endblock %}
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
 
-                    <!-- One box: masthead + prompt, green left edge -->
+                    <!-- Masthead + content box -->
                     <tr>
                         <td class="di-pad" style="background-color:#ffffff; border:1px solid #d8d4cc; border-left:5px solid #009302; border-radius:8px; padding:34px 30px;">
                             <h1 class="di-name" style="margin:0 0 32px; font-family:'Special Elite',Georgia,'Times New Roman',serif; font-size:38px; line-height:1.05; letter-spacing:-0.5px; color:#1a1a1a;">
                                 The Daily Inquirer
                             </h1>
-
-                            {% if prompt.category %}
-                            <p style="margin:0 0 12px; font-family:'Elms Sans',Helvetica,Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:1.3px; text-transform:uppercase; color:#009302;">
-                                {{ prompt.category }}
-                            </p>
-                            {% endif %}
-                            <h2 class="di-question" style="margin:0 0 30px; font-family:'Elms Sans',Helvetica,Arial,sans-serif; font-size:23px; font-weight:600; line-height:1.42; color:#1a1a1a;">
-                                {{ prompt.question }}
-                            </h2>
-                            <p style="margin:0; font-family:'Elms Sans',Helvetica,Arial,sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">
-                                <strong style="color:#555555;">Reply to this email</strong> and your response is saved to your journal.
-                            </p>
+                            {% block content %}{% endblock %}
                         </td>
                     </tr>
 
                     <!-- Footer -->
                     <tr>
                         <td align="center" style="padding:26px 16px 0; font-family:'Elms Sans',Helvetica,Arial,sans-serif; font-size:12px; color:#8a8a8a;">
-                            <a href="https://www.dailyinquirer.me/terms/" style="color:#8a8a8a; text-decoration:none;">Terms</a>
-                            <span style="color:#cbc6b8;">&nbsp;&middot;&nbsp;</span>
-                            <a href="https://www.dailyinquirer.me/privacy/" style="color:#8a8a8a; text-decoration:none;">Privacy</a>
-                            <span style="color:#cbc6b8;">&nbsp;&middot;&nbsp;</span>
-                            <a href="https://www.dailyinquirer.me/settings/" style="color:#8a8a8a; text-decoration:none;">Unsubscribe</a>
+                            {% block footer %}{% endblock %}
                         </td>
                     </tr>
 
