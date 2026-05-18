@@ -1,10 +1,12 @@
 {% load entry_extras %}
 {% if archived %}
 <article class="ed-card ed-entry ed-entry--archived">
-  {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
-  <h2 class="ed-entry__q"><a href="{% url 'entry_detail' entry.pk %}">{{ entry.prompt.question }}</a></h2>
-  <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
-  <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
+  <a class="ed-entry__link" href="{% url 'entry_detail' entry.pk %}">
+    {% if entry.prompt.category %}<p class="ed-entry__cat">{{ entry.prompt.category }}</p>{% endif %}
+    <h2 class="ed-entry__q">{{ entry.prompt.question }}</h2>
+    <p class="ed-entry__date">{{ entry.pub_date|date:"M d, Y" }}</p>
+    <div class="ed-entry__body">{{ entry.content|unwrap|linebreaks }}</div>
+  </a>
   <div class="ed-entry__actions">
     <form method="post" action="{% url 'entry_detail' entry.pk %}">
       {% csrf_token %}

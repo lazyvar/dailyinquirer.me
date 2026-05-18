@@ -17,7 +17,7 @@
 
 <body class="auth-page">
     <main class="auth-main">
-        <div class="auth-wordmark"><a href="/">The Daily Inquirer</a></div>
+        <div class="auth-wordmark"><a href="{% if user.is_authenticated %}/dash/{% else %}/{% endif %}">The Daily Inquirer</a></div>
         <div class="auth-card">
             {% block card %}{% endblock %}
         </div>

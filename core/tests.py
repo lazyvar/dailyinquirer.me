@@ -45,7 +45,7 @@ class EmailConfirmationTests(TestCase):
 
         user.refresh_from_db()
         self.assertTrue(user.confirmed_email)
-        # A freshly-confirmed user has not onboarded yet, so the index
+        # A freshly-confirmed user has not onboarded yet, so the /dash/
         # redirect is itself gated onward to the onboarding page.
         self.assertRedirects(response, reverse('onboarding'))
 
@@ -91,6 +91,21 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('index'))
         self.assertContains(response, 'href="/register/"')
         self.assertContains(response, 'href="/login/"')
+        self.assertNotContains(response, 'Take me to dashboard')
+
+    def test_logged_in_home_shows_dashboard_cta(self):
+        user = User.objects.create_user(
+            email='member@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="home"')
+        self.assertContains(response, 'Take me to dashboard')
+        self.assertContains(response, 'href="/dash/"')
+        self.assertNotContains(response, "Get started, it's free")
 
 
 class AboutPageTests(TestCase):
@@ -606,27 +621,27 @@ class DashboardTests(TestCase):
 
     def test_dashboard_renders_editorial_layout(self):
         self._entry()
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="dashboard"')
         self.assertContains(response, 'ed-masthead')
         self.assertContains(response, 'ed-card')
 
     def test_dashboard_loads_account_css(self):
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(response, 'account.css')
 
     def test_search_matches_entry_content(self):
         self._entry(content='a story about lighthouses')
         self._entry(content='a note about mountains')
-        response = self.client.get(reverse('index'), {'q': 'lighthouse'})
+        response = self.client.get(reverse('dash'), {'q': 'lighthouse'})
         self.assertContains(response, 'lighthouses')
         self.assertNotContains(response, 'mountains')
 
     def test_search_matches_prompt_question(self):
         self._entry(question='Describe your first car', content='aaa')
         self._entry(question='Write a haiku', content='bbb')
-        response = self.client.get(reverse('index'), {'q': 'haiku'})
+        response = self.client.get(reverse('dash'), {'q': 'haiku'})
         self.assertContains(response, 'bbb')
         self.assertNotContains(response, 'aaa')
 
@@ -634,70 +649,70 @@ class DashboardTests(TestCase):
         self._entry(content='january early entry', day=5)
         self._entry(content='january late entry', day=25)
         response = self.client.get(
-            reverse('index'), {'from': '2026-01-10', 'to': '2026-01-31'})
+            reverse('dash'), {'from': '2026-01-10', 'to': '2026-01-31'})
         self.assertContains(response, 'late entry')
         self.assertNotContains(response, 'early entry')
 
     def test_category_filter(self):
         self._entry(category='Narrative', content='narrative entry')
         self._entry(category='Expository', content='expository entry')
-        response = self.client.get(reverse('index'), {'category': 'Narrative'})
+        response = self.client.get(reverse('dash'), {'category': 'Narrative'})
         self.assertContains(response, 'narrative entry')
         self.assertNotContains(response, 'expository entry')
 
     def test_sort_oldest_first(self):
         self._entry(content='older one', day=1)
         self._entry(content='newer one', day=28)
-        response = self.client.get(reverse('index'), {'sort': 'oldest'})
+        response = self.client.get(reverse('dash'), {'sort': 'oldest'})
         body = response.content.decode()
         self.assertLess(body.index('older one'), body.index('newer one'))
 
     def test_pagination_caps_page_at_25(self):
         for i in range(26):
             self._entry(content='entry number %d' % i)
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertEqual(len(response.context['page_obj'].object_list), 25)
 
     def test_pagination_second_page(self):
         for i in range(26):
             self._entry(content='entry number %d' % i)
-        response = self.client.get(reverse('index'), {'page': 2})
+        response = self.client.get(reverse('dash'), {'page': 2})
         self.assertEqual(len(response.context['page_obj'].object_list), 1)
 
     def test_pagination_links_preserve_filters(self):
         for i in range(26):
             self._entry(category='Narrative', content='narrative %d' % i)
-        response = self.client.get(reverse('index'), {'category': 'Narrative'})
+        response = self.client.get(reverse('dash'), {'category': 'Narrative'})
         self.assertContains(response, 'category=Narrative')
         self.assertContains(response, 'page=2')
 
     def test_result_count_hidden_without_filters(self):
         self._entry()
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertNotContains(response, 'ed-count')
 
     def test_result_count_shown_when_searching(self):
         self._entry(content='findable text')
-        response = self.client.get(reverse('index'), {'q': 'findable'})
+        response = self.client.get(reverse('dash'), {'q': 'findable'})
         self.assertContains(response, 'ed-count')
 
     def test_filter_panel_open_when_filtering(self):
         self._entry()
-        response = self.client.get(reverse('index'), {'category': 'Reflective'})
+        response = self.client.get(reverse('dash'), {'category': 'Reflective'})
         self.assertContains(response, '<details class="ed-filter-disclosure" open>')
 
     def test_filter_panel_closed_by_default(self):
         self._entry()
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertNotContains(response, 'ed-filter-disclosure" open')
 
     def test_empty_state_no_entries(self):
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(response, 'No entries yet')
 
     def test_empty_state_no_matches(self):
         self._entry(content='something')
-        response = self.client.get(reverse('index'), {'q': 'zzzznomatch'})
+        response = self.client.get(reverse('dash'), {'q': 'zzzznomatch'})
         self.assertContains(response, 'No entries match')
 
 
@@ -739,7 +754,7 @@ class EntryContentUnwrapTests(TestCase):
             content="The night was bright.\nThe town slept.\n\nThen dawn came.",
         )
         self.client.force_login(user)
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(response, '<p>The night was bright. The town slept.</p>')
         self.assertContains(response, '<p>Then dawn came.</p>')
         self.assertNotContains(response, 'bright.<br>')
@@ -976,7 +991,7 @@ class OnboardingPageTests(TestCase):
             'timezone': 'America/New_York',
             'mail_hour': '9',
         })
-        self.assertRedirects(response, reverse('index'))
+        self.assertRedirects(response, reverse('dash'))
         self.user.refresh_from_db()
         self.assertTrue(self.user.onboarded)
         self.assertTrue(self.user.is_subscribed)
@@ -990,11 +1005,11 @@ class OnboardingPageTests(TestCase):
         self.assertTrue(self.user.onboarded)
         self.assertFalse(self.user.is_subscribed)
 
-    def test_already_onboarded_user_is_redirected_to_index(self):
+    def test_already_onboarded_user_is_redirected_to_dashboard(self):
         self.user.onboarded = True
         self.user.save()
         response = self.client.get(reverse('onboarding'))
-        self.assertRedirects(response, reverse('index'))
+        self.assertRedirects(response, reverse('dash'))
 
     def test_page_autodetects_timezone_with_js(self):
         response = self.client.get(reverse('onboarding'))
@@ -1283,6 +1298,16 @@ class EntryDetailTests(TestCase):
             reverse('entry_detail', args=[self.entry.pk]))
         self.assertNotContains(response, 'Delete this entry?')
 
+    def test_non_owner_post_action_is_rejected(self):
+        other = User.objects.create_user(
+            email='intruder@example.com', password='mostdope1')
+        self.client.force_login(other)
+        response = self.client.post(
+            reverse('entry_detail', args=[self.entry.pk]),
+            {'action': 'delete'})
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Entry.objects.filter(pk=self.entry.pk).exists())
+
 
 class ArchivedEntriesTests(TestCase):
     def setUp(self):
@@ -1341,23 +1366,94 @@ class DashboardArchiveIntegrationTests(TestCase):
     def test_dashboard_excludes_archived_entries(self):
         self._entry(content='visible entry', archived=False)
         self._entry(content='hidden entry', archived=True)
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(response, 'visible entry')
         self.assertNotContains(response, 'hidden entry')
 
     def test_dashboard_entry_links_to_detail(self):
         entry = self._entry(content='clickable entry')
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(
             response, reverse('entry_detail', args=[entry.pk]))
 
     def test_dashboard_shows_archived_link_when_archived_exist(self):
         self._entry(content='hidden entry', archived=True)
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertContains(response, reverse('archived_entries'))
         self.assertContains(response, 'ed-archived-link')
 
     def test_dashboard_hides_archived_link_when_none_archived(self):
         self._entry(content='visible entry', archived=False)
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dash'))
         self.assertNotContains(response, 'ed-archived-link')
+
+
+class DashboardRouteTests(TestCase):
+    """The dashboard lives at its own /dash/ URL, gated by auth."""
+
+    def _make_user(self, confirmed=True, onboarded=True):
+        user = User.objects.create_user(
+            email='router@example.com', password='mostdope1')
+        user.confirmed_email = confirmed
+        user.onboarded = onboarded
+        user.save()
+        return user
+
+    def test_anonymous_dash_redirects_to_login(self):
+        response = self.client.get(reverse('dash'))
+        self.assertRedirects(response, '/login/?next=/dash/')
+
+    def test_confirmed_onboarded_user_sees_dashboard(self):
+        self.client.force_login(self._make_user())
+        response = self.client.get(reverse('dash'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="dashboard"')
+
+    def test_unconfirmed_user_is_logged_out_and_redirected(self):
+        self.client.force_login(self._make_user(confirmed=False))
+        response = self.client.get(reverse('dash'))
+        self.assertRedirects(response, reverse('unconfirmed_email'))
+
+
+class LoginRedirectTests(TestCase):
+    def test_login_sends_user_to_dashboard(self):
+        user = User.objects.create_user(
+            email='loginer@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        response = self.client.post(reverse('login'), {
+            'username': 'loginer@example.com',
+            'password': 'mostdope1',
+        })
+        self.assertRedirects(response, reverse('dash'))
+
+
+class SignedInHomeLinkTests(TestCase):
+    """The wordmark/masthead "The Daily Inquirer" link points at /dash/
+    for signed-in users, and at / for anonymous visitors."""
+
+    def _user(self):
+        user = User.objects.create_user(
+            email='linker@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        return user
+
+    def test_footer_wordmark_links_home_for_anonymous(self):
+        response = self.client.get(reverse('index'))
+        self.assertContains(
+            response, '<a class="site-footer__wordmark" href="/">')
+
+    def test_footer_wordmark_links_to_dash_when_signed_in(self):
+        self.client.force_login(self._user())
+        response = self.client.get(reverse('dash'))
+        self.assertContains(
+            response, '<a class="site-footer__wordmark" href="/dash/">')
+
+    def test_masthead_links_to_dash_when_signed_in(self):
+        self.client.force_login(self._user())
+        response = self.client.get(reverse('settings'))
+        self.assertContains(
+            response, '<a href="/dash/">The Daily Inquirer</a>')

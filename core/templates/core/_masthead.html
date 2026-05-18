@@ -1,5 +1,5 @@
 <header class="ed-masthead">
   <span class="ed-masthead__tab">{{ tab }}</span>
-  <h1 class="ed-masthead__name"><a href="/">The Daily Inquirer</a></h1>
+  <h1 class="ed-masthead__name"><a href="{% if user.is_authenticated %}/dash/{% else %}/{% endif %}">The Daily Inquirer</a></h1>
   <p class="ed-masthead__email"><a href="/settings/">{{ user.email }}</a></p>
 </header>

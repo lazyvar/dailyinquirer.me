@@ -11,7 +11,7 @@
 
   {% include "core/_messages.html" %}
 
-  <form class="ed-filters" method="get" action="/">
+  <form class="ed-filters" method="get" action="/dash/">
     <div class="ed-search-row">
       <input class="ed-search" type="text" name="q" value="{{ q }}"
              aria-label="Search your entries"
@@ -46,7 +46,7 @@
           </select>
         </div>
         <button class="ed-btn" type="submit">Apply</button>
-        <a class="ed-filter-clear" href="/">Clear</a>
+        <a class="ed-filter-clear" href="/dash/">Clear</a>
       </div>
     </details>
   </form>
@@ -89,7 +89,7 @@
   {% elif filters_active %}
     <div class="ed-empty">
       <h2>No entries match your search.</h2>
-      <p><a href="/">Clear search and filters</a></p>
+      <p><a href="/dash/">Clear search and filters</a></p>
     </div>
   {% else %}
     <div class="ed-empty">

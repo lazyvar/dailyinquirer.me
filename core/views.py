@@ -35,14 +35,7 @@ ENTRIES_PER_PAGE = 25
 
 
 def index(request):
-    if request.user.is_authenticated:
-        if request.user.confirmed_email:
-            return _dashboard(request)
-        else:
-            logout(request)
-            return redirect('unconfirmed_email')
-    else:
-        return render(request, 'core/index.html')
+    return render(request, 'core/index.html')
 
 
 def _dashboard(request):
@@ -114,6 +107,14 @@ def _dashboard(request):
 
 
 @login_required
+def dashboard(request):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+    return _dashboard(request)
+
+
+@login_required
 def entry_detail(request, pk):
     if request.method not in ('GET', 'HEAD', 'POST'):
         return HttpResponseNotAllowed(['GET', 'POST'])
@@ -137,7 +138,7 @@ def entry_detail(request, pk):
             entry.archived_at = timezone.now()
             entry.save()
             messages.success(request, 'Entry archived.')
-            return redirect('index')
+            return redirect('dash')
         if action == 'restore':
             entry.archived_at = None
             entry.save()
@@ -146,7 +147,7 @@ def entry_detail(request, pk):
         if action == 'delete':
             entry.delete()
             messages.success(request, 'Entry deleted.')
-            return redirect('index')
+            return redirect('dash')
         return HttpResponseBadRequest('unknown action')
 
     mode = 'view'
@@ -205,7 +206,7 @@ def settings(request):
 @login_required
 def onboarding(request):
     if request.user.onboarded:
-        return redirect('index')
+        return redirect('dash')
 
     if request.method == 'POST':
         form = OnboardingForm(request.POST)
@@ -216,7 +217,7 @@ def onboarding(request):
             user.mail_time = int(form.cleaned_data['mail_hour']) * 60
             user.onboarded = True
             user.save()
-            return redirect('index')
+            return redirect('dash')
         context = {'form': form, 'timezones': pytz.common_timezones,
                    'hours': HOUR_CHOICES}
         return render(request, 'core/onboarding.html', context)
@@ -227,7 +228,7 @@ def onboarding(request):
 
 def register(request):
     if request.user.is_authenticated:
-        return redirect('index')
+        return redirect('dash')
     else:
         if request.method == 'POST':
             form = UserCreationForm(request.POST)
@@ -306,7 +307,7 @@ def activate(request, uidb64, token):
         except:
             pass
 
-        return redirect('index')
+        return redirect('dash')
     else:
         return HttpResponse('Activation link is invalid!')
 

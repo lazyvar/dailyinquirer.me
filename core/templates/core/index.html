@@ -14,8 +14,12 @@
       <h1 class="ed-masthead__name">The Daily Inquirer</h1>
       <p class="ed-sub">One thoughtful writing prompt in your inbox every day. Reply, and your words are saved to your personal page.</p>
       <div class="ed-cta">
+        {% if user.is_authenticated %}
+        <a class="ed-btn" href="/dash/">Take me to dashboard</a>
+        {% else %}
         <a class="ed-btn" href="/register/">Get started, it's free</a>
         <p class="ed-signin">Already registered? <a href="/login/">Log in.</a></p>
+        {% endif %}
       </div>
     </div>
   </header>
