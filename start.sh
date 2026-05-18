@@ -17,8 +17,23 @@ $PYTHON manage.py repair_migration_history
 $PYTHON manage.py migrate --noinput
 
 # Pass "dev" to run the Django development server (uses settings.local).
+# An optional "-p <port>" overrides the default port 8000.
 if [ "$1" = "dev" ]; then
-    exec $PYTHON manage.py runserver 0.0.0.0:8000
+    PORT=8000
+    shift
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -p)
+                PORT="$2"
+                shift 2
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                exit 1
+                ;;
+        esac
+    done
+    exec $PYTHON manage.py runserver "0.0.0.0:$PORT"
 fi
 
 # Run the hourly prompt cron alongside the web server (production only — the
