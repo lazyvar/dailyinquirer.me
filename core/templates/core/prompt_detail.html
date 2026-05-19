@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% load sitenav %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="prompt">
+  {% sitenav 'prompt' prompt=prompt %}
+
+  {% include "core/_messages.html" %}
+
+  <article class="ed-card">
+    {% if prompt.category %}<p class="ed-entry__cat">{{ prompt.category }}</p>{% endif %}
+    <h1 class="ed-detail__q">{{ prompt.question }}</h1>
+    <p class="ed-entry__date">{{ prompt.mail_day|date:"M d, Y" }}</p>
+  </article>
+
+  {% if entries %}
+    {% for entry in entries %}
+      {% include "core/_entry_card.html" with entry=entry %}
+    {% endfor %}
+  {% else %}
+  <div class="ed-empty">
+    <h2>No entry for this prompt yet.</h2>
+    <p>You haven&rsquo;t written anything for this prompt.</p>
+  </div>
+  {% endif %}
+
+  <details class="ed-add"{% if show_form %} open{% endif %}>
+    <summary class="ed-btn ed-add__toggle">Add entry</summary>
+    <form class="ed-add__form" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <label class="ed-field__label" for="id_content">Your entry</label>
+      {% if form.content.errors %}
+      <div class="ed-alert ed-alert--error">{{ form.content.errors|join:" " }}</div>
+      {% endif %}
+      <textarea class="ed-detail__textarea" id="id_content" name="content">{{ form.content.value|default_if_none:"" }}</textarea>
+      <div class="ed-actions">
+        <button class="ed-btn" type="submit">Save entry</button>
+      </div>
+    </form>
+  </details>
+</div>
+{% endblock %}

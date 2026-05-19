@@ -1,0 +1,52 @@
+{% extends "core/base.html" %}
+{% load sitenav %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="prompts">
+  {% sitenav 'prompts' %}
+
+  {% include "core/_messages.html" %}
+
+  <div class="ed-promptnav">
+    <h2 class="ed-promptnav__month">{{ month_label }}</h2>
+    <span class="ed-promptnav__arrows">
+      {% if prev_month %}
+      <a class="ed-promptnav__arrow" href="?month={{ prev_month }}" aria-label="Previous month">&lsaquo;</a>
+      {% else %}
+      <span class="ed-promptnav__arrow is-disabled" aria-hidden="true">&lsaquo;</span>
+      {% endif %}
+      {% if next_month %}
+      <a class="ed-promptnav__arrow" href="?month={{ next_month }}" aria-label="Next month">&rsaquo;</a>
+      {% else %}
+      <span class="ed-promptnav__arrow is-disabled" aria-hidden="true">&rsaquo;</span>
+      {% endif %}
+    </span>
+  </div>
+
+  {% if rows %}
+  <ul class="ed-promptlist">
+    {% for row in rows %}
+    <li>
+      <a class="ed-promptrow" href="{% url 'prompt_detail' row.prompt.pk %}">
+        <span class="ed-promptrow__date">{{ row.prompt.mail_day|date:"M j" }}</span>
+        <span class="ed-promptrow__q">{{ row.prompt.question }}</span>
+        {% if row.answered %}
+        <span class="ed-pill ed-pill--yes">Answered</span>
+        {% else %}
+        <span class="ed-pill ed-pill--no">No entry</span>
+        {% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="ed-empty">
+    <h2>No prompts this month.</h2>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

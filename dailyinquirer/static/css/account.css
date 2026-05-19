@@ -690,7 +690,8 @@
   margin: 0 0 6px;
 }
 
-#entry .ed-detail__q {
+#entry .ed-detail__q,
+#prompt .ed-detail__q {
   font-family: var(--body);
   font-size: 1.35rem;
   font-weight: 400;
@@ -933,11 +934,13 @@
 
 /* --- Dashboard archived link -------------------------------- */
 
-#dashboard .ed-archived-link {
+#dashboard .ed-archived-link,
+#dashboard .ed-prompts-link {
   margin: 18px 0 0;
 }
 
-#dashboard .ed-archived-link a {
+#dashboard .ed-archived-link a,
+#dashboard .ed-prompts-link a {
   font-family: var(--body);
   font-size: 0.74rem;
   font-weight: 600;
@@ -945,6 +948,129 @@
   text-decoration: none;
 }
 
-#dashboard .ed-archived-link a:hover {
+#dashboard .ed-archived-link a:hover,
+#dashboard .ed-prompts-link a:hover {
   text-decoration: underline;
+}
+
+/* --- Prompt viewer ------------------------------------------ */
+#prompts .ed-promptnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 4px;
+}
+
+#prompts .ed-promptnav__month {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+#prompts .ed-promptnav__arrows {
+  display: flex;
+  gap: 6px;
+}
+
+#prompts .ed-promptnav__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+#prompts .ed-promptnav__arrow:hover,
+#prompts .ed-promptnav__arrow:focus {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+
+#prompts .ed-promptnav__arrow.is-disabled {
+  color: var(--ink-faint);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+#prompts .ed-promptlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#prompts .ed-promptrow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+#prompts .ed-promptrow:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+#prompts .ed-promptrow__date {
+  flex: none;
+  width: 52px;
+  font-family: var(--body);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+#prompts .ed-promptrow__q {
+  flex: 1;
+  font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.app .ed-pill {
+  flex: none;
+  font-family: var(--body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.app .ed-pill--yes {
+  background: rgba(var(--accent-rgb), 0.13);
+  color: var(--accent-dark);
+}
+
+.app .ed-pill--no {
+  background: #efece4;
+  color: var(--ink-faint);
+}
+
+/* --- Prompt detail: add entry ------------------------------- */
+#prompt .ed-add {
+  margin-top: 18px;
+}
+
+#prompt .ed-add__toggle {
+  display: inline-block;
+  cursor: pointer;
+  list-style: none;
+}
+
+#prompt .ed-add__toggle::-webkit-details-marker {
+  display: none;
+}
+
+#prompt .ed-add[open] .ed-add__toggle {
+  margin-bottom: 12px;
 }

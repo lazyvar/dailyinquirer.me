@@ -55,6 +55,7 @@
   {% if archived_count %}
   <p class="ed-archived-link"><a href="{% url 'archived_entries' %}">View archived ({{ archived_count }})</a></p>
   {% endif %}
+  <p class="ed-prompts-link"><a href="{% url 'prompts' %}">Browse all prompts</a></p>
 
   {% if filters_active %}
   <p class="ed-count">Showing <b>{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}</b> of <b>{{ total_count }}</b> entries</p>

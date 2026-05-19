@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -1681,6 +1681,26 @@ class SiteNavTests(TestCase):
         trail = build_trail('about')
         self.assertEqual(trail, [{'label': 'About', 'url': None}])
 
+    def test_prompts_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('prompts')
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Prompts'])
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertIsNone(trail[1]['url'])
+
+    def test_prompt_detail_trail_chains_writing_prompts_and_date(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory',
+            mail_day=timezone.make_aware(datetime(2026, 5, 12, 12, 0)))
+        trail = build_trail('prompt', prompt=prompt)
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Prompts', 'May 12, 2026'])
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1]['url'], reverse('prompts'))
+        self.assertIsNone(trail[2]['url'])
+
     def test_active_entry_trail_has_two_crumbs_with_date_label(self):
         from core.templatetags.sitenav import build_trail
         prompt = Prompt.objects.create(
@@ -1797,3 +1817,265 @@ class SiteNavTests(TestCase):
         response = self.client.get(reverse('about'))
         self.assertContains(response, 'ed-sitenav')
         self.assertContains(response, 'ed-masthead__email')
+
+
+class PromptViewerRoutingTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='reader@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_prompts_page_requires_login(self):
+        response = self.client.get('/prompts/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_prompts_page_renders_for_logged_in_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/prompts/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/prompts.html')
+
+    def test_prompt_detail_requires_login(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_prompt_detail_renders_for_logged_in_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/prompt_detail.html')
+
+
+class PromptInboxTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='inbox@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.other = User.objects.create_user(
+            email='someone@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='Question for today',
+            mail_day=timezone.now())
+
+    def test_lists_a_past_prompt_in_the_current_month(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'Question for today')
+
+    def test_excludes_a_future_dated_prompt(self):
+        Prompt.objects.create(
+            question='Future question',
+            mail_day=timezone.now() + timedelta(days=1))
+        response = self.client.get('/prompts/')
+        self.assertNotContains(response, 'Future question')
+
+    def test_excludes_a_prompt_from_another_month(self):
+        Prompt.objects.create(
+            question='Old month question',
+            mail_day=timezone.now() - timedelta(days=60))
+        response = self.client.get('/prompts/')
+        self.assertNotContains(response, 'Old month question')
+
+    def test_pill_reads_answered_when_user_has_an_entry(self):
+        Entry.objects.create(
+            content='My answer', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'Answered')
+
+    def test_pill_reads_no_entry_without_an_entry(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_another_users_entry_does_not_flip_the_pill(self):
+        Entry.objects.create(
+            content='Their answer', author=self.other,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_archived_entry_does_not_flip_the_pill(self):
+        Entry.objects.create(
+            content='Archived answer', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now(),
+            archived_at=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_empty_month_shows_empty_state(self):
+        self.prompt.delete()
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No prompts this month')
+
+
+class PromptInboxNavigationTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='nav@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.today_prompt = Prompt.objects.create(
+            question='Today question', mail_day=timezone.now())
+        self.old_prompt = Prompt.objects.create(
+            question='Old question',
+            mail_day=timezone.now() - timedelta(days=70))
+
+    def test_current_month_disables_the_next_arrow(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'is-disabled')
+
+    def test_current_month_offers_a_previous_arrow_link(self):
+        # An older prompt exists 70 days back, so previous is a real link.
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'aria-label="Previous month"')
+        self.assertContains(response, '?month=')
+
+    def test_month_param_shows_that_months_prompts(self):
+        old_month = (timezone.now() - timedelta(days=70)).strftime('%Y-%m')
+        response = self.client.get(f'/prompts/?month={old_month}')
+        self.assertContains(response, 'Old question')
+        self.assertNotContains(response, 'Today question')
+
+    def test_future_month_param_falls_back_to_current_month(self):
+        future_month = (timezone.now() + timedelta(days=400)).strftime('%Y-%m')
+        response = self.client.get(f'/prompts/?month={future_month}')
+        self.assertContains(response, 'Today question')
+
+    def test_invalid_month_param_falls_back_to_current_month(self):
+        response = self.client.get('/prompts/?month=not-a-month')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Today question')
+
+
+class DashboardPromptsLinkTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='dashlink@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_dashboard_links_to_the_prompt_viewer(self):
+        response = self.client.get('/dash/')
+        self.assertContains(response, reverse('prompts'))
+        self.assertContains(response, 'Browse all prompts')
+
+
+class PromptDetailTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='detail@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.other = User.objects.create_user(
+            email='stranger@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_detail_shows_the_prompt_question(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'What did you learn today?')
+
+    def test_detail_lists_only_the_users_own_entries(self):
+        Entry.objects.create(
+            content='My reflection', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now())
+        Entry.objects.create(
+            content='Their reflection', author=self.other,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'My reflection')
+        self.assertNotContains(response, 'Their reflection')
+
+    def test_detail_excludes_archived_entries(self):
+        Entry.objects.create(
+            content='Archived note', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now(),
+            archived_at=timezone.now())
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertNotContains(response, 'Archived note')
+
+    def test_detail_shows_empty_state_with_no_entries(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'No entry for this prompt yet')
+
+    def test_future_prompt_returns_404(self):
+        future = Prompt.objects.create(
+            question='Future question',
+            mail_day=timezone.now() + timedelta(days=10))
+        response = self.client.get(f'/prompts/{future.pk}/')
+        self.assertEqual(response.status_code, 404)
+
+
+class PromptAddEntryTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_detail_page_shows_the_add_entry_control(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'Add entry')
+
+    def test_post_creates_an_entry_for_the_prompt(self):
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'A brand new reflection.'})
+        self.assertRedirects(response, f'/prompts/{self.prompt.pk}/')
+        entry = Entry.objects.get(prompt=self.prompt, author=self.user)
+        self.assertEqual(entry.content, 'A brand new reflection.')
+
+    def test_added_entry_appears_on_the_detail_page(self):
+        self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'Visible reflection.'})
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'Visible reflection.')
+
+    def test_blank_entry_is_rejected(self):
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Entry.objects.filter(prompt=self.prompt).count(), 0)
+
+    def test_add_entry_requires_login(self):
+        self.client.logout()
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'Should not be saved.'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Entry.objects.count(), 0)

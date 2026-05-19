@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from authentication.admin import UserCreationForm
-from django.http import (HttpResponse, HttpResponseBadRequest,
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                           HttpResponseForbidden, HttpResponseNotAllowed)
 from django.conf import settings as django_settings
 from authentication.models import User
@@ -23,7 +23,7 @@ from core.forms import (HOUR_CHOICES, ChangeEmailForm, EntryEditForm,
 from core.utils import mail_newsletter, read_unsubscribe_token
 from core.email import send_activation_email, send_email_change_emails
 
-from datetime import datetime
+from datetime import date, datetime
 import hmac
 
 import json
@@ -167,6 +167,107 @@ def archived_entries(request):
         author=request.user, archived_at__isnull=False
     ).select_related('prompt').order_by('-archived_at')
     return render(request, 'core/archived.html', {'entries': entries})
+
+
+@login_required
+def prompts(request):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+
+    local = request.user.local_time()
+    today = local.date() if local is not None else timezone.localdate()
+
+    year, month = today.year, today.month
+    raw_month = request.GET.get('month', '')
+    try:
+        parsed = datetime.strptime(raw_month, '%Y-%m')
+        year, month = parsed.year, parsed.month
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+
+    # Never show a month in the future.
+    if (year, month) > (today.year, today.month):
+        year, month = today.year, today.month
+
+    month_prompts = Prompt.objects.filter(
+        mail_day__year=year,
+        mail_day__month=month,
+        mail_day__date__lte=today,
+    ).order_by('-mail_day')
+
+    answered_ids = set(
+        Entry.objects.filter(
+            author=request.user,
+            archived_at__isnull=True,
+            prompt__in=month_prompts,
+        ).values_list('prompt_id', flat=True)
+    )
+
+    rows = [
+        {'prompt': p, 'answered': p.id in answered_ids}
+        for p in month_prompts
+    ]
+
+    first_of_month = date(year, month, 1)
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    has_older = Prompt.objects.filter(
+        mail_day__date__lt=first_of_month).exists()
+    has_newer = (year, month) < (today.year, today.month)
+
+    context = {
+        'rows': rows,
+        'month_label': first_of_month.strftime('%B %Y'),
+        'prev_month': (f'{prev_year:04d}-{prev_month:02d}'
+                       if has_older else None),
+        'next_month': (f'{next_year:04d}-{next_month:02d}'
+                       if has_newer else None),
+    }
+    return render(request, 'core/prompts.html', context)
+
+
+@login_required
+def prompt_detail(request, pk):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+
+    prompt = get_object_or_404(Prompt, pk=pk)
+
+    local = request.user.local_time()
+    today = local.date() if local is not None else timezone.localdate()
+    if prompt.mail_day.date() > today:
+        raise Http404('prompt is not yet available')
+
+    form = None
+    if request.method == 'POST':
+        if request.POST.get('action') != 'add':
+            return HttpResponseBadRequest('unknown action')
+        form = EntryEditForm(request.POST)
+        if form.is_valid():
+            Entry.objects.create(
+                content=form.cleaned_data['content'],
+                author=request.user,
+                prompt=prompt,
+                pub_date=timezone.now(),
+            )
+            messages.success(request, 'Your entry was added.')
+            return redirect('prompt_detail', pk=prompt.pk)
+
+    entries = Entry.objects.filter(
+        author=request.user,
+        prompt=prompt,
+        archived_at__isnull=True,
+    ).select_related('prompt').order_by('-pub_date')
+
+    return render(request, 'core/prompt_detail.html', {
+        'prompt': prompt,
+        'entries': entries,
+        'form': form,
+        'show_form': form is not None,
+    })
 
 
 @login_required
