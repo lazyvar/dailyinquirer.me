@@ -1,3 +1,9 @@
+/* Always reserve the scrollbar gutter so navigating between a scrolling
+   and a non-scrolling page doesn't shift the layout horizontally. */
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Elms Sans', system-ui, sans-serif;
     background-color: var(--page);
