@@ -1681,6 +1681,26 @@ class SiteNavTests(TestCase):
         trail = build_trail('about')
         self.assertEqual(trail, [{'label': 'About', 'url': None}])
 
+    def test_prompts_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('prompts')
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Prompts'])
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertIsNone(trail[1]['url'])
+
+    def test_prompt_detail_trail_chains_writing_prompts_and_date(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory',
+            mail_day=timezone.make_aware(datetime(2026, 5, 12, 12, 0)))
+        trail = build_trail('prompt', prompt=prompt)
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Prompts', 'May 12, 2026'])
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1]['url'], reverse('prompts'))
+        self.assertIsNone(trail[2]['url'])
+
     def test_active_entry_trail_has_two_crumbs_with_date_label(self):
         from core.templatetags.sitenav import build_trail
         prompt = Prompt.objects.create(

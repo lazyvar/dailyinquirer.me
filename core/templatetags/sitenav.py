@@ -24,11 +24,11 @@ def build_trail(page, entry=None, prompt=None):
     if page == 'about':
         return [{'label': 'About', 'url': None}]
     if page == 'prompts':
-        return [{**prompts, 'url': None}]
+        return [writing, {**prompts, 'url': None}]
     if page == 'prompt':
         if prompt is None:
             raise ValueError("sitenav page 'prompt' requires a prompt argument")
-        return [prompts, {
+        return [writing, prompts, {
             'label': date_format(prompt.mail_day, 'M j, Y'),
             'url': None,
         }]
