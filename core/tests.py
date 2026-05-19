@@ -1653,3 +1653,147 @@ class SignedInHomeLinkTests(TestCase):
         response = self.client.get(reverse('settings'))
         self.assertContains(
             response, '<a href="/dash/">The Daily Inquirer</a>')
+
+
+class SiteNavTests(TestCase):
+    def test_dashboard_trail_is_single_current_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('dashboard')
+        self.assertEqual(trail, [{'label': 'Your writing', 'url': None}])
+
+    def test_settings_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('settings')
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['label'], 'Your writing')
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'Settings', 'url': None})
+
+    def test_archived_trail_links_back_to_dashboard(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('archived')
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'Archived', 'url': None})
+
+    def test_about_trail_is_single_standalone_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        trail = build_trail('about')
+        self.assertEqual(trail, [{'label': 'About', 'url': None}])
+
+    def test_active_entry_trail_has_two_crumbs_with_date_label(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        user = User.objects.create_user(
+            email='e@example.com', password='mostdope1')
+        entry = Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)))
+        trail = build_trail('entry', entry=entry)
+        self.assertEqual(len(trail), 2)
+        self.assertEqual(trail[0]['url'], reverse('dash'))
+        self.assertEqual(trail[1], {'label': 'May 12, 2026', 'url': None})
+
+    def test_archived_entry_trail_inserts_archived_crumb(self):
+        from core.templatetags.sitenav import build_trail
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        user = User.objects.create_user(
+            email='e2@example.com', password='mostdope1')
+        entry = Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)),
+            archived_at=timezone.now())
+        trail = build_trail('entry', entry=entry)
+        self.assertEqual([c['label'] for c in trail],
+                         ['Your writing', 'Archived', 'May 12, 2026'])
+        self.assertEqual(trail[1]['url'], reverse('archived_entries'))
+        self.assertIsNone(trail[2]['url'])
+
+    def test_dashboard_renders_sitenav_current_tab(self):
+        user = User.objects.create_user(
+            email='dash@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('dash'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, 'ed-tab--current')
+        self.assertContains(response, 'Your writing')
+
+    def test_settings_renders_sitenav_with_ancestor_link(self):
+        user = User.objects.create_user(
+            email='set@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(
+            response,
+            '<a class="ed-tab ed-tab--link" href="%s">Your writing</a>'
+            % reverse('dash'), html=False)
+        self.assertContains(response, '>Settings</span>')
+
+    def test_archived_renders_sitenav_and_drops_back_link(self):
+        user = User.objects.create_user(
+            email='arc@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('archived_entries'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>Archived</span>')
+        self.assertNotContains(response, 'ed-detail-back')
+
+    def _make_entry(self, email, archived=False):
+        user = User.objects.create_user(email=email, password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        prompt = Prompt.objects.create(
+            question='A prompt', category='Memory', mail_day=timezone.now())
+        return user, Entry.objects.create(
+            content='words', author=user, prompt=prompt,
+            pub_date=timezone.make_aware(datetime(2026, 5, 12, 12, 0)),
+            archived_at=timezone.now() if archived else None)
+
+    def test_active_entry_renders_two_crumb_sitenav(self):
+        user, entry = self._make_entry('ent@example.com')
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse('entry_detail', args=[entry.pk]))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>May 12, 2026</span>')
+        self.assertNotContains(response, 'ed-detail-back')
+
+    def test_archived_entry_renders_three_crumb_sitenav(self):
+        user, entry = self._make_entry('ent2@example.com', archived=True)
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse('entry_detail', args=[entry.pk]))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>Archived</a>')
+        self.assertContains(response, '>May 12, 2026</span>')
+
+    def test_about_renders_standalone_sitenav_anonymous(self):
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, '>About</span>')
+        # Anonymous: no email line in the masthead.
+        self.assertNotContains(response, 'ed-masthead__email')
+
+    def test_about_renders_sitenav_with_email_when_logged_in(self):
+        user = User.objects.create_user(
+            email='abt@example.com', password='mostdope1')
+        user.confirmed_email = True
+        user.onboarded = True
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'ed-sitenav')
+        self.assertContains(response, 'ed-masthead__email')

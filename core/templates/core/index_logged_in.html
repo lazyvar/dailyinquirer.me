@@ -1,5 +1,6 @@
 {% extends "core/base.html" %}
 {% load entry_extras %}
+{% load sitenav %}
 
 {% block extra_head %}
 <link href="/static/css/account.css" rel="stylesheet">
@@ -7,7 +8,7 @@
 
 {% block content %}
 <div class="app" id="dashboard">
-  {% include "core/_masthead.html" with tab="Your writing" %}
+  {% sitenav 'dashboard' %}
 
   {% include "core/_messages.html" %}
 

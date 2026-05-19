@@ -171,13 +171,18 @@
   opacity: 0.85;
 }
 
+#home .ed-step__body {
+  display: flex;
+  flex-direction: column;
+}
+
 #home .ed-step h3 {
   font-family: var(--body);
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 4px;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 #home .ed-step p {
@@ -194,7 +199,7 @@
   display: grid;
   grid-template-columns: 1fr 200px;
   gap: 36px;
-  align-items: start;
+  align-items: center;
 }
 
 #home .ed-about__text p {
@@ -331,6 +336,7 @@
 
   #home .ed-about__img {
     max-width: 190px;
+    justify-self: center;
   }
 
   #home .ed-prompts {
@@ -355,12 +361,17 @@
 
   #home .ed-step {
     flex-direction: row;
-    align-items: flex-start;
-    gap: 14px;
+    align-items: center;
+    gap: 16px;
   }
 
   #home .ed-step img {
     flex-shrink: 0;
+  }
+
+  #home .ed-step__body {
+    flex: 1;
+    min-width: 0;
   }
 
   #home .ed-prompts {

@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load sitenav %}
 
 {% block extra_head %}
 <link href="/static/css/account.css" rel="stylesheet">
@@ -6,7 +7,7 @@
 
 {% block content %}
 <div class="app" id="settings">
-  {% include "core/_masthead.html" with tab="Account" %}
+  {% sitenav 'settings' %}
 
   <p class="ed-label">Settings</p>
 
