@@ -52,9 +52,10 @@ adds the first in-app way to write an entry.
   - `‹` (previous month) is disabled when no prompt exists in any earlier month.
 - An empty month (rare for a daily service) shows a plain "No prompts this
   month" message.
-- Template: `core/templates/core/prompts.html`, extends `core/base.html`,
-  includes `core/_masthead.html` with `tab="Prompts"`. The footer comes from
-  `base.html` like every other page.
+- Template: `core/templates/core/prompts.html`, extends `core/base.html` and
+  renders the shared header with `{% sitenav 'prompts' %}` — the same
+  breadcrumb/masthead tag every other logged-in page uses. The footer comes
+  from `base.html` like every other page.
 - Discoverable via a **"Browse all prompts"** link added to
   `index_logged_in.html`, next to the existing "View archived" link.
 
@@ -74,8 +75,9 @@ adds the first in-app way to write an entry.
   `Entry` with `author=request.user`, `prompt=<this prompt>`,
   `content=<submitted text>`, `pub_date=timezone.now()`; then redirects back to
   the detail page. On failure, re-renders with the form errors.
-- Template: `core/templates/core/prompt_detail.html`, extending `base.html` and
-  including `_masthead.html` (`tab="Prompts"`) and the standard footer.
+- Template: `core/templates/core/prompt_detail.html`, extending `base.html`,
+  rendering the shared header with `{% sitenav 'prompt' prompt=prompt %}` and
+  the standard footer.
 
 ## Data model
 
