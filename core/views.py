@@ -23,7 +23,7 @@ from core.forms import (HOUR_CHOICES, ChangeEmailForm, EntryEditForm,
 from core.utils import mail_newsletter, read_unsubscribe_token
 from core.email import send_activation_email, send_email_change_emails
 
-from datetime import datetime
+from datetime import date, datetime
 import hmac
 
 import json
@@ -178,9 +178,21 @@ def prompts(request):
     local = request.user.local_time()
     today = local.date() if local is not None else timezone.localdate()
 
+    year, month = today.year, today.month
+    raw_month = request.GET.get('month', '')
+    try:
+        parsed = datetime.strptime(raw_month, '%Y-%m')
+        year, month = parsed.year, parsed.month
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+
+    # Never show a month in the future.
+    if (year, month) > (today.year, today.month):
+        year, month = today.year, today.month
+
     month_prompts = Prompt.objects.filter(
-        mail_day__year=today.year,
-        mail_day__month=today.month,
+        mail_day__year=year,
+        mail_day__month=month,
         mail_day__date__lte=today,
     ).order_by('-mail_day')
 
@@ -197,9 +209,21 @@ def prompts(request):
         for p in month_prompts
     ]
 
+    first_of_month = date(year, month, 1)
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    has_older = Prompt.objects.filter(
+        mail_day__date__lt=first_of_month).exists()
+    has_newer = (year, month) < (today.year, today.month)
+
     context = {
         'rows': rows,
-        'month_label': today.strftime('%B %Y'),
+        'month_label': first_of_month.strftime('%B %Y'),
+        'prev_month': (f'{prev_year:04d}-{prev_month:02d}'
+                       if has_older else None),
+        'next_month': (f'{next_year:04d}-{next_month:02d}'
+                       if has_newer else None),
     }
     return render(request, 'core/prompts.html', context)
 

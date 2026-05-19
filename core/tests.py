@@ -1899,3 +1899,46 @@ class PromptInboxTests(TestCase):
         self.prompt.delete()
         response = self.client.get('/prompts/')
         self.assertContains(response, 'No prompts this month')
+
+
+class PromptInboxNavigationTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='nav@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.today_prompt = Prompt.objects.create(
+            question='Today question', mail_day=timezone.now())
+        self.old_prompt = Prompt.objects.create(
+            question='Old question',
+            mail_day=timezone.now() - timedelta(days=70))
+
+    def test_current_month_disables_the_next_arrow(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'is-disabled')
+
+    def test_current_month_offers_a_previous_arrow_link(self):
+        # An older prompt exists 70 days back, so previous is a real link.
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'aria-label="Previous month"')
+        self.assertContains(response, '?month=')
+
+    def test_month_param_shows_that_months_prompts(self):
+        old_month = (timezone.now() - timedelta(days=70)).strftime('%Y-%m')
+        response = self.client.get(f'/prompts/?month={old_month}')
+        self.assertContains(response, 'Old question')
+        self.assertNotContains(response, 'Today question')
+
+    def test_future_month_param_falls_back_to_current_month(self):
+        future_month = (timezone.now() + timedelta(days=400)).strftime('%Y-%m')
+        response = self.client.get(f'/prompts/?month={future_month}')
+        self.assertContains(response, 'Today question')
+
+    def test_invalid_month_param_falls_back_to_current_month(self):
+        response = self.client.get('/prompts/?month=not-a-month')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Today question')
