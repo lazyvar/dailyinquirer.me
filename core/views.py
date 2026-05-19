@@ -170,6 +170,23 @@ def archived_entries(request):
 
 
 @login_required
+def prompts(request):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+    return render(request, 'core/prompts.html', {})
+
+
+@login_required
+def prompt_detail(request, pk):
+    if not request.user.confirmed_email:
+        logout(request)
+        return redirect('unconfirmed_email')
+    prompt = get_object_or_404(Prompt, pk=pk)
+    return render(request, 'core/prompt_detail.html', {'prompt': prompt})
+
+
+@login_required
 def settings(request):
 
     if request.method == 'POST':

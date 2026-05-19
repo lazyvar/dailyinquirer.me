@@ -1797,3 +1797,39 @@ class SiteNavTests(TestCase):
         response = self.client.get(reverse('about'))
         self.assertContains(response, 'ed-sitenav')
         self.assertContains(response, 'ed-masthead__email')
+
+
+class PromptViewerRoutingTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='reader@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_prompts_page_requires_login(self):
+        response = self.client.get('/prompts/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_prompts_page_renders_for_logged_in_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/prompts/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/prompts.html')
+
+    def test_prompt_detail_requires_login(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response['Location'])
+
+    def test_prompt_detail_renders_for_logged_in_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/prompt_detail.html')

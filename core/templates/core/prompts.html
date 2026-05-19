@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+{% load sitenav %}
+
+{% block extra_head %}
+<link href="/static/css/account.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="app" id="prompts">
+  {% sitenav 'prompts' %}
+
+  {% include "core/_messages.html" %}
+</div>
+{% endblock %}
