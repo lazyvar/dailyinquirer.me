@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -1833,3 +1833,69 @@ class PromptViewerRoutingTests(TestCase):
         response = self.client.get(f'/prompts/{self.prompt.pk}/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'core/prompt_detail.html')
+
+
+class PromptInboxTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='inbox@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.other = User.objects.create_user(
+            email='someone@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='Question for today',
+            mail_day=timezone.now())
+
+    def test_lists_a_past_prompt_in_the_current_month(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'Question for today')
+
+    def test_excludes_a_future_dated_prompt(self):
+        Prompt.objects.create(
+            question='Future question',
+            mail_day=timezone.now() + timedelta(days=1))
+        response = self.client.get('/prompts/')
+        self.assertNotContains(response, 'Future question')
+
+    def test_excludes_a_prompt_from_another_month(self):
+        Prompt.objects.create(
+            question='Old month question',
+            mail_day=timezone.now() - timedelta(days=60))
+        response = self.client.get('/prompts/')
+        self.assertNotContains(response, 'Old month question')
+
+    def test_pill_reads_answered_when_user_has_an_entry(self):
+        Entry.objects.create(
+            content='My answer', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'Answered')
+
+    def test_pill_reads_no_entry_without_an_entry(self):
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_another_users_entry_does_not_flip_the_pill(self):
+        Entry.objects.create(
+            content='Their answer', author=self.other,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_archived_entry_does_not_flip_the_pill(self):
+        Entry.objects.create(
+            content='Archived answer', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now(),
+            archived_at=timezone.now())
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No entry')
+
+    def test_empty_month_shows_empty_state(self):
+        self.prompt.delete()
+        response = self.client.get('/prompts/')
+        self.assertContains(response, 'No prompts this month')

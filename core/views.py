@@ -174,7 +174,34 @@ def prompts(request):
     if not request.user.confirmed_email:
         logout(request)
         return redirect('unconfirmed_email')
-    return render(request, 'core/prompts.html', {})
+
+    local = request.user.local_time()
+    today = local.date() if local is not None else timezone.localdate()
+
+    month_prompts = Prompt.objects.filter(
+        mail_day__year=today.year,
+        mail_day__month=today.month,
+        mail_day__date__lte=today,
+    ).order_by('-mail_day')
+
+    answered_ids = set(
+        Entry.objects.filter(
+            author=request.user,
+            archived_at__isnull=True,
+            prompt__in=month_prompts,
+        ).values_list('prompt_id', flat=True)
+    )
+
+    rows = [
+        {'prompt': p, 'answered': p.id in answered_ids}
+        for p in month_prompts
+    ]
+
+    context = {
+        'rows': rows,
+        'month_label': today.strftime('%B %Y'),
+    }
+    return render(request, 'core/prompts.html', context)
 
 
 @login_required
