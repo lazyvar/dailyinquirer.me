@@ -1958,3 +1958,54 @@ class DashboardPromptsLinkTests(TestCase):
         response = self.client.get('/dash/')
         self.assertContains(response, reverse('prompts'))
         self.assertContains(response, 'Browse all prompts')
+
+
+class PromptDetailTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='detail@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.other = User.objects.create_user(
+            email='stranger@example.com', password='mostdope1')
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_detail_shows_the_prompt_question(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'What did you learn today?')
+
+    def test_detail_lists_only_the_users_own_entries(self):
+        Entry.objects.create(
+            content='My reflection', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now())
+        Entry.objects.create(
+            content='Their reflection', author=self.other,
+            prompt=self.prompt, pub_date=timezone.now())
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'My reflection')
+        self.assertNotContains(response, 'Their reflection')
+
+    def test_detail_excludes_archived_entries(self):
+        Entry.objects.create(
+            content='Archived note', author=self.user,
+            prompt=self.prompt, pub_date=timezone.now(),
+            archived_at=timezone.now())
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertNotContains(response, 'Archived note')
+
+    def test_detail_shows_empty_state_with_no_entries(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'No entry for this prompt yet')
+
+    def test_future_prompt_returns_404(self):
+        future = Prompt.objects.create(
+            question='Future question',
+            mail_day=timezone.now() + timedelta(days=10))
+        response = self.client.get(f'/prompts/{future.pk}/')
+        self.assertEqual(response.status_code, 404)

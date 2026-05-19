@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from authentication.admin import UserCreationForm
-from django.http import (HttpResponse, HttpResponseBadRequest,
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                           HttpResponseForbidden, HttpResponseNotAllowed)
 from django.conf import settings as django_settings
 from authentication.models import User
@@ -233,8 +233,24 @@ def prompt_detail(request, pk):
     if not request.user.confirmed_email:
         logout(request)
         return redirect('unconfirmed_email')
+
     prompt = get_object_or_404(Prompt, pk=pk)
-    return render(request, 'core/prompt_detail.html', {'prompt': prompt})
+
+    local = request.user.local_time()
+    today = local.date() if local is not None else timezone.localdate()
+    if prompt.mail_day.date() > today:
+        raise Http404('prompt is not yet available')
+
+    entries = Entry.objects.filter(
+        author=request.user,
+        prompt=prompt,
+        archived_at__isnull=True,
+    ).select_related('prompt').order_by('-pub_date')
+
+    return render(request, 'core/prompt_detail.html', {
+        'prompt': prompt,
+        'entries': entries,
+    })
 
 
 @login_required

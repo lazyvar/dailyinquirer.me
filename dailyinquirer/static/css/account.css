@@ -690,7 +690,8 @@
   margin: 0 0 6px;
 }
 
-#entry .ed-detail__q {
+#entry .ed-detail__q,
+#prompt .ed-detail__q {
   font-family: var(--body);
   font-size: 1.35rem;
   font-weight: 400;
