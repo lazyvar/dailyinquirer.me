@@ -1942,3 +1942,19 @@ class PromptInboxNavigationTests(TestCase):
         response = self.client.get('/prompts/?month=not-a-month')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Today question')
+
+
+class DashboardPromptsLinkTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='dashlink@example.com', password='mostdope1')
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_dashboard_links_to_the_prompt_viewer(self):
+        response = self.client.get('/dash/')
+        self.assertContains(response, reverse('prompts'))
+        self.assertContains(response, 'Browse all prompts')

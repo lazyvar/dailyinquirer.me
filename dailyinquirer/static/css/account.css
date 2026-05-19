@@ -933,11 +933,13 @@
 
 /* --- Dashboard archived link -------------------------------- */
 
-#dashboard .ed-archived-link {
+#dashboard .ed-archived-link,
+#dashboard .ed-prompts-link {
   margin: 18px 0 0;
 }
 
-#dashboard .ed-archived-link a {
+#dashboard .ed-archived-link a,
+#dashboard .ed-prompts-link a {
   font-family: var(--body);
   font-size: 0.74rem;
   font-weight: 600;
@@ -945,7 +947,8 @@
   text-decoration: none;
 }
 
-#dashboard .ed-archived-link a:hover {
+#dashboard .ed-archived-link a:hover,
+#dashboard .ed-prompts-link a:hover {
   text-decoration: underline;
 }
 
