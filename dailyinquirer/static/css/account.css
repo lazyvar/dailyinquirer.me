@@ -1055,3 +1055,22 @@
   background: #efece4;
   color: var(--ink-faint);
 }
+
+/* --- Prompt detail: add entry ------------------------------- */
+#prompt .ed-add {
+  margin-top: 18px;
+}
+
+#prompt .ed-add__toggle {
+  display: inline-block;
+  cursor: pointer;
+  list-style: none;
+}
+
+#prompt .ed-add__toggle::-webkit-details-marker {
+  display: none;
+}
+
+#prompt .ed-add[open] .ed-add__toggle {
+  margin-bottom: 12px;
+}

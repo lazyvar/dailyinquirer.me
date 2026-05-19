@@ -241,6 +241,21 @@ def prompt_detail(request, pk):
     if prompt.mail_day.date() > today:
         raise Http404('prompt is not yet available')
 
+    form = None
+    if request.method == 'POST':
+        if request.POST.get('action') != 'add':
+            return HttpResponseBadRequest('unknown action')
+        form = EntryEditForm(request.POST)
+        if form.is_valid():
+            Entry.objects.create(
+                content=form.cleaned_data['content'],
+                author=request.user,
+                prompt=prompt,
+                pub_date=timezone.now(),
+            )
+            messages.success(request, 'Your entry was added.')
+            return redirect('prompt_detail', pk=prompt.pk)
+
     entries = Entry.objects.filter(
         author=request.user,
         prompt=prompt,
@@ -250,6 +265,8 @@ def prompt_detail(request, pk):
     return render(request, 'core/prompt_detail.html', {
         'prompt': prompt,
         'entries': entries,
+        'form': form,
+        'show_form': form is not None,
     })
 
 

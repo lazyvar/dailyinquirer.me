@@ -2009,3 +2009,53 @@ class PromptDetailTests(TestCase):
             mail_day=timezone.now() + timedelta(days=10))
         response = self.client.get(f'/prompts/{future.pk}/')
         self.assertEqual(response.status_code, 404)
+
+
+class PromptAddEntryTests(TestCase):
+    def setUp(self):
+        Prompt.objects.all().delete()
+        self.user = User.objects.create_user(
+            email='writer@example.com', password='mostdope1')
+        self.user.timezone = 'UTC'
+        self.user.confirmed_email = True
+        self.user.onboarded = True
+        self.user.save()
+        self.client.force_login(self.user)
+        self.prompt = Prompt.objects.create(
+            question='What did you learn today?',
+            mail_day=timezone.now())
+
+    def test_detail_page_shows_the_add_entry_control(self):
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'Add entry')
+
+    def test_post_creates_an_entry_for_the_prompt(self):
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'A brand new reflection.'})
+        self.assertRedirects(response, f'/prompts/{self.prompt.pk}/')
+        entry = Entry.objects.get(prompt=self.prompt, author=self.user)
+        self.assertEqual(entry.content, 'A brand new reflection.')
+
+    def test_added_entry_appears_on_the_detail_page(self):
+        self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'Visible reflection.'})
+        response = self.client.get(f'/prompts/{self.prompt.pk}/')
+        self.assertContains(response, 'Visible reflection.')
+
+    def test_blank_entry_is_rejected(self):
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Entry.objects.filter(prompt=self.prompt).count(), 0)
+
+    def test_add_entry_requires_login(self):
+        self.client.logout()
+        response = self.client.post(
+            f'/prompts/{self.prompt.pk}/',
+            {'action': 'add', 'content': 'Should not be saved.'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Entry.objects.count(), 0)
